@@ -1,26 +1,21 @@
-﻿using Framework.Caching.Properties;
-using System;
+﻿using System;
+using System.Text;
 
 namespace Framework.Caching.Protocol
 {
-    public class KeyValueRequest : IRequest
+    public class KeyValueRequest : KeyRequest
     {
-        public KeyValueRequest(RequestType requestType, string key, string value)
+        public KeyValueRequest(string command, string key, string value) : base(command, key)
         {
-            RequestType = requestType;
-            Key = key ?? throw new ArgumentNullException(nameof(key));
-            if (key.Length == 0)
-                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
-
             Value = value;
         }
 
-        private string Key { get; }
+        public KeyValueRequest(CommandType commandType, string key, string value) : this(commandType.ToCommand(), key, value)
+        {
+        }
 
-        private string Value { get; }
+        public string Value { get; }
 
-        public RequestType RequestType { get; }
-
-        public string RequestText => RequestType.ToString().ToUpperInvariant() + " " + Key + " " + Value + RespClient.CR + RespClient.LF;
+        public override Memory<byte> Buffer => Encoding.UTF8.GetBytes(Command + " " + Key + " " + Value + (char)RespClient.CR + (char)RespClient.LF);
     }
 }

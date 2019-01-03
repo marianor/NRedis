@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Framework.Caching.Protocol.Tests
@@ -39,11 +40,11 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void RequestText_GetDatagram()
+        public void Buffer_GetDatagram()
         {
             var target = new PExpireRequest("foo", TimeSpan.FromHours(5));
 
-            Assert.AreEqual("PEXPIRE foo 18000000\r\n", target.RequestText);
+            Assert.AreEqual("PEXPIRE foo 18000000\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
         }
     }
 }

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace RedisTester
 {
-    public class LocalRedisLauncher : IDisposable
+    public sealed class LocalRedisLauncher : IDisposable
     {
         private readonly Process _redisServer;
 
@@ -31,6 +31,8 @@ namespace RedisTester
         public void Dispose()
         {
             _redisServer.Kill();
+            _redisServer.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

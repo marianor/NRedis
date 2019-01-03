@@ -1,11 +1,9 @@
 ﻿using Framework.Caching.Properties;
 using Framework.Caching.Transport;
 using System;
-using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
-using System.Net;
 using System.Security.Authentication;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,14 +12,8 @@ namespace Framework.Caching.Protocol
     // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
     {
-        internal const char CR = '\r';
-        internal const char LF = '\n';
-
-        private const char SimpleString = '+';
-        private const char Error = '-';
-        private const char Integer = ':';
-        private const char BulkString = '$';
-        private const char Array = '*';
+        internal const byte CR = (byte)'\r';
+        internal const byte LF = (byte)'\n';
 
         private readonly ITransport _transport;
         private readonly ITransportSettings _settings;
@@ -32,6 +24,32 @@ namespace Framework.Caching.Protocol
             _transport = settings.CreateTransport();
         }
 
+        private void Connect()
+        {
+            if (_transport.State == TransportState.Closed)
+            {
+                _transport.Connect();
+                if (_settings.Password != null)
+                {
+                    var response = Execute(new KeyRequest(CommandType.Auth, _settings.Password));
+                    VerifyConnection(response);
+                }
+            }
+        }
+
+        private async Task ConnectAsync(CancellationToken token)
+        {
+            if (_transport.State == TransportState.Closed)
+            {
+                await _transport.ConnectAsync(token).ConfigureAwait(false);
+                if (_settings.Password != null)
+                {
+                    var response = await ExecuteAsync(new[] { new KeyRequest(CommandType.Auth, _settings.Password) }, token).ConfigureAwait(false);
+                    VerifyConnection(response);
+                }
+            }
+        }
+
         public IResponse[] Execute(params IRequest[] requests)
         {
             if (requests == null)
@@ -40,23 +58,10 @@ namespace Framework.Caching.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
-            var request = string.Concat(requests.Select(c => c.RequestText));
-            var responseText = _transport.Send(request);
-            return new RespParser(responseText).Parse();
-        }
-
-        private void Connect()
-        {
-            if (_transport.State == TransportState.Closed)
-            {
-                _transport.Connect();
-                if (_settings.Password != null)
-                {
-                    var response = Execute(new KeyRequest(RequestType.Auth, _settings.Password));
-                    if (!Equals(response[0].Value, "OK"))
-                        throw new AuthenticationException("");
-                }
-            }
+            // TODO make better
+            var requestsBuffer = GetBufferAsync(requests).Result;
+            var responseText = _transport.Send(requestsBuffer);
+            return new RespParser(responseText).Parse().ToArray();
         }
 
         public async Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token = default(CancellationToken))
@@ -66,138 +71,35 @@ namespace Framework.Caching.Protocol
             if (requests.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
-            await ConnectAsync(token);
-
-            var request = string.Concat(requests.Select(c => c.RequestText));
-            var responseText = await _transport.SendAsync(request, token);
-            return new RespParser(responseText).Parse();
+            await ConnectAsync(token).ConfigureAwait(false);
+            // TODO make better
+            var requestsBuffer = await GetBufferAsync(requests);
+            var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
+            return new RespParser(responseText).Parse().ToArray();
         }
 
-        private async Task ConnectAsync(CancellationToken token)
+        private async static ValueTask<byte[]> GetBufferAsync(IRequest[] requests)
         {
-            if (_transport.State == TransportState.Closed)
+            // TODO improve
+            var size = 0;
+            var pipe = new Pipe();
+            var memory = pipe.Writer.GetMemory(4096);
+            foreach (var request in requests)
             {
-                await _transport.ConnectAsync(token);
-                if (_settings.Password != null)
-                {
-                    var response = await ExecuteAsync(new[] { new KeyRequest(RequestType.Auth, _settings.Password) }, token);
-                    if (!Equals(response[0].Value, "OK"))
-                        throw new AuthenticationException("");
-                }
+                var requestBuffer = request.Buffer;
+                size += requestBuffer.Length;
+                await pipe.Writer.WriteAsync(requestBuffer);
             }
+
+            await pipe.Writer.FlushAsync();
+            pipe.Writer.Complete();
+            return memory.Slice(0, size).ToArray();
         }
 
-        public class RespParser
+        private static void VerifyConnection(IResponse[] response)
         {
-            private string _response;
-            private int _index;
-
-            public RespParser(string response)
-            {
-                _response = response;
-            }
-
-            public IResponse[] Parse()
-            {
-                var responses = new List<IResponse>();
-                while (_response.Length > _index)
-                {
-                    responses.Add(ParseElement(_response));
-                }
-
-                return responses.ToArray();
-            }
-
-            private IResponse ParseElement(string response)
-            {
-                switch (response[_index++])
-                {
-                    case SimpleString:
-                        return new StringResponse(ValueType.SimpleString, ParseSimpleString(response));
-                    case Error:
-                        return new StringResponse(ValueType.Error, ParseSimpleString(response));
-                    case Integer:
-                        return new IntegerResponse(ParseInteger(response));
-                    case BulkString:
-                        return new StringResponse(ValueType.BulkString, ParseBulkString(response));
-                    case Array:
-                        return new ArrayResponse(ParseArray(response));
-                    default:
-                        throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar);
-                }
-            }
-
-            private string ParseSimpleString(string response)
-            {
-                var builder = new StringBuilder(255);
-
-                var c = response[_index++];
-                while (c != CR && _index < response.Length)
-                {
-                    builder.Append(c);
-                    c = response[_index++];
-                }
-
-                if (_index >= response.Length || response[_index++] != LF)
-                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
-
-                return builder.ToString();
-            }
-
-            private int ParseInteger(string response)
-            {
-                var number = 0;
-                var sign = 1;
-
-                var c = response[_index];
-                if (c == '-')
-                {
-                    sign = -1;
-                    _index++;
-                }
-
-                c = response[_index++];
-                while (_index < response.Length && c != CR)
-                {
-                    number = number * 10 + c - '0';
-                    c = response[_index++];
-                }
-
-                if (_index >= response.Length || response[_index++] != LF)
-                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
-
-                return number * sign;
-            }
-
-            private string ParseBulkString(string response)
-            {
-                var length = ParseInteger(response);
-                if (length == -1)
-                    return null;
-
-                var value = response.Substring(_index, length);
-                _index += length;
-
-                if (_index >= response.Length || response[_index++] != CR || response[_index++] != LF)
-                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
-
-                return value;
-            }
-
-            private object[] ParseArray(string response)
-            {
-                var length = ParseInteger(response);
-                if (length == -1)
-                    return null;
-
-                var array = new object[length];
-                for (var arrayIndex = 0; arrayIndex < length; arrayIndex++)
-                {
-                    array[arrayIndex] = ParseElement(response).Value;
-                }
-
-                return array;
-            }
+            if (!Equals(response[0].Value, "OK")) // TODO Remove harcoded value
+                throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }
 }

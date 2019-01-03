@@ -18,7 +18,7 @@ namespace Framework.Caching
 
         public byte[] Get(string key)
         {
-            var response = _respClient.Execute(new KeyRequest(RequestType.Get, key))[0];
+            var response = _respClient.Execute(new KeyRequest(CommandType.Get, key))[0];
             if (response.Value == null)
                 return null;
             return Convert.FromBase64String(response.Value as string);
@@ -32,8 +32,8 @@ namespace Framework.Caching
         /// <returns></returns>
         public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
         {
-            var requests = new IRequest[] { new KeyRequest(RequestType.Get, key) };
-            var responses = await _respClient.ExecuteAsync(requests, token);
+            var requests = new IRequest[] { new KeyRequest(CommandType.Get, key) };
+            var responses = await _respClient.ExecuteAsync(requests, token).ConfigureAwait(false);
             var response = responses[0];
             if (response.Value == null)
                 return null;
@@ -58,7 +58,7 @@ namespace Framework.Caching
 
         public void Remove(string key)
         {
-            _respClient.Execute(new KeyRequest(RequestType.Del, key));
+            _respClient.Execute(new KeyRequest(CommandType.Del, key));
         }
 
         public Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
@@ -68,7 +68,7 @@ namespace Framework.Caching
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            var requests = new List<IRequest> { new KeyValueRequest(RequestType.Set, key, Convert.ToBase64String(value)) };
+            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Convert.ToBase64String(value)) };
             if (options.SlidingExpiration.HasValue)
                 requests.Add(new PExpireRequest(key, options.SlidingExpiration.Value));
             else if (options.AbsoluteExpiration.HasValue)
@@ -89,7 +89,7 @@ namespace Framework.Caching
         /// <returns></returns>
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
         {
-            var requests = new List<IRequest> { new KeyValueRequest(RequestType.Set, key, Convert.ToBase64String(value)) };
+            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Convert.ToBase64String(value)) };
             if (options.SlidingExpiration.HasValue)
                 requests.Add(new PExpireRequest(key, options.SlidingExpiration.Value));
             else if (options.AbsoluteExpiration.HasValue)
@@ -97,7 +97,7 @@ namespace Framework.Caching
             else if (options.AbsoluteExpirationRelativeToNow.HasValue)
                 requests.Add(new PExpireAtRequest(key, DateTimeOffset.Now + options.AbsoluteExpirationRelativeToNow.Value));
 
-            var responses = await _respClient.ExecuteAsync(requests.ToArray(), token); // TODO validate responses
+            var responses = await _respClient.ExecuteAsync(requests.ToArray(), token).ConfigureAwait(false); // TODO validate responses
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 
 namespace Framework.Caching.Transport
 {
@@ -10,6 +11,15 @@ namespace Framework.Caching.Transport
 
         public string Password { get; set; }
 
-        public ITransport CreateTransport() => (ITransport)Activator.CreateInstance(typeof(T), Host, Port);
+        // TODO should it be here ???
+        public ILogger Logger { get; set; }
+
+        public ITransport CreateTransport()
+        {
+            // TODO should be by interface
+            var transport = (TcpTransport)Activator.CreateInstance(typeof(T), Host, Port);
+            transport.Logger = Logger;
+            return transport;
+        }
     }
 }

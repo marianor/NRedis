@@ -2,29 +2,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Framework.Caching.Protocol
 {
-    public class KeysRequest : IRequest
+    public class KeysRequest : Request
     {
-        public KeysRequest(RequestType requestType, params string[] keys) : this(requestType, (IEnumerable<string>)keys)
-        {
-        }
-
-        public KeysRequest(RequestType requestType, IEnumerable<string> keys)
+        public KeysRequest(string command, IEnumerable<string> keys) : base(command)
         {
             Keys = keys ?? throw new ArgumentNullException(nameof(keys));
             if (!keys.Any())
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(keys));
+        }
 
-            RequestType = requestType;
-            Keys = keys;
+        public KeysRequest(string command, params string[] keys) : this(command, (IEnumerable<string>)keys)
+        {
+        }
+
+        public KeysRequest(CommandType commandType, IEnumerable<string> keys) : this(commandType.ToCommand(), keys)
+        {
+        }
+
+        public KeysRequest(CommandType commandType, params string[] keys) : this(commandType.ToCommand(), keys)
+        {
         }
 
         public IEnumerable<string> Keys { get; }
 
-        public RequestType RequestType { get; }
-
-        public string RequestText => RequestType.ToString().ToUpperInvariant() + " " + string.Join(" ", Keys) + RespClient.CR + RespClient.LF;
+        public override Memory<byte> Buffer => Encoding.UTF8.GetBytes(Command + " " + string.Join(" ", Keys) + (char)RespClient.CR + (char)RespClient.LF);
     }
 }

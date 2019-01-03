@@ -13,18 +13,16 @@ namespace Framework.Caching.Transport
 
         protected override Stream GetStream(TcpClient client)
         {
-            var stream = base.GetStream(client);
-            var sslStream = new SslStream(stream, false);
-            sslStream.AuthenticateAsClient(Host);
-            return sslStream;
+            var stream = new SslStream(base.GetStream(client), false);
+            stream.AuthenticateAsClient(Host);
+            return stream;
         }
 
         protected override async Task<Stream> GetStreamAsync(TcpClient client)
         {
-            var stream = base.GetStream(client);
-            var sslStream = new SslStream(stream, false);
-            await sslStream.AuthenticateAsClientAsync(Host);
-            return sslStream;
+            var stream = new SslStream(base.GetStream(client), false);
+            await stream.AuthenticateAsClientAsync(Host).ConfigureAwait(false);
+            return stream;
         }
     }
 }

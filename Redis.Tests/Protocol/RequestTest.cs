@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Text;
 
 namespace Framework.Caching.Protocol.Tests
 {
@@ -6,11 +8,27 @@ namespace Framework.Caching.Protocol.Tests
     public class RequestTest
     {
         [TestMethod]
-        public void RequestText_GetDatagram()
+        public void Request_ThrowsIfCommandNull()
         {
-            var target = new Request(RequestType.DBSize);
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new Request(null));
 
-            Assert.AreEqual("DBSIZE\r\n", target.RequestText);
+            Assert.AreEqual("command", e.ParamName);
+        }
+
+        [TestMethod]
+        public void Request_ThrowsIfCommandEmpty()
+        {
+            var e = Assert.ThrowsException<ArgumentException>(() => new Request(string.Empty));
+
+            Assert.AreEqual("command", e.ParamName);
+        }
+
+        [TestMethod]
+        public void Buffer_GetDatagram()
+        {
+            var target = new Request(CommandType.DBSize);
+
+            Assert.AreEqual("DBSIZE\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
         }
     }
 }

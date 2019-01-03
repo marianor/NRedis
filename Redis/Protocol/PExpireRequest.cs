@@ -1,27 +1,21 @@
 ﻿using Framework.Caching.Properties;
 using System;
+using System.Text;
 
 namespace Framework.Caching.Protocol
 {
-    public class PExpireRequest : IRequest
+    public class PExpireRequest : KeyRequest
     {
-        public PExpireRequest(string key, TimeSpan slidingExpiration)
+        public PExpireRequest(string key, TimeSpan slidingExpiration) : base(CommandType.PExpire.ToCommand(), key)
         {
-            Key = key ?? throw new ArgumentNullException(nameof(key));
-            if (key.Length == 0)
-                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
             if (slidingExpiration <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(slidingExpiration));
 
             SlidingExpiration = slidingExpiration;
         }
 
-        public string Key { get; }
-
         public TimeSpan SlidingExpiration { get; }
 
-        public RequestType RequestType => RequestType.PExpire;
-
-        public string RequestText => RequestType.ToString().ToUpperInvariant() + " " + Key + " " + SlidingExpiration.TotalMilliseconds + RespClient.CR + RespClient.LF;
+        public override Memory<byte> Buffer => new Memory<byte>(Encoding.UTF8.GetBytes(Command + " " + Key + " " + SlidingExpiration.TotalMilliseconds + (char)RespClient.CR + (char)RespClient.LF));
     }
 }

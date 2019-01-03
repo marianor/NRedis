@@ -1,9 +1,11 @@
-﻿namespace Framework.Caching.Protocol
+﻿using System;
+
+namespace Framework.Caching.Protocol
 {
     public interface IRequest
     {
-        RequestType RequestType { get; }
+        Memory<byte> Buffer { get; }
 
-        string RequestText { get; }
+        string Command { get; }
     }
 }

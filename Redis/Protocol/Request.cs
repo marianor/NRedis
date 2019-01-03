@@ -1,14 +1,24 @@
-﻿namespace Framework.Caching.Protocol
+﻿using Framework.Caching.Properties;
+using System;
+using System.Text;
+
+namespace Framework.Caching.Protocol
 {
     public class Request : IRequest
     {
-        public Request(RequestType requestType)
+        public Request(string command)
         {
-            RequestType = requestType;
+            Command = command ?? throw new ArgumentNullException(nameof(command));
+            if (command.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(command));
         }
 
-        public string RequestText => RequestType.ToString().ToUpperInvariant() + RespClient.CR + RespClient.LF;
+        public Request(CommandType commandType) : this(commandType.ToCommand())
+        {
+        }
 
-        public RequestType RequestType { get; private set; }
+        public virtual Memory<byte> Buffer => Encoding.UTF8.GetBytes(Command + (char)RespClient.CR + (char)RespClient.LF);
+
+        public string Command { get; }
     }
 }

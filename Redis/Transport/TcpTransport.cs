@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Framework.Caching.Properties;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -12,23 +14,26 @@ namespace Framework.Caching.Transport
     {
         private const int DefaultCapacity = 4096;
 
-        private readonly Encoding _encoding = Encoding.UTF8;
         private TcpClient _client;
         private Stream _stream;
 
         public TcpTransport(string host, int port)
         {
-            Host = host;
+            Host = host ?? throw new ArgumentNullException(nameof(host));
+            if (host.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(host));
+            if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
+                throw new ArgumentOutOfRangeException(nameof(port));
             Port = port;
         }
-
-        public string Host { get; }
-
-        public int Port { get; }
 
         public ILogger Logger { get; set; }
 
         public TransportState State { get; private set; }
+
+        public string Host { get; }
+
+        public int Port { get; }
 
         public void Connect()
         {
@@ -41,72 +46,74 @@ namespace Framework.Caching.Transport
         public async Task ConnectAsync(CancellationToken token = default(CancellationToken))
         {
             _client = new TcpClient();
-            await _client.ConnectAsync(Host, Port);
-            _stream = await GetStreamAsync(_client);
+            await _client.ConnectAsync(Host, Port).ConfigureAwait(false);
+            _stream = await GetStreamAsync(_client).ConfigureAwait(false);
             State = TransportState.Connected;
         }
 
         protected virtual Stream GetStream(TcpClient client) => client.GetStream();
 
-        protected virtual async Task<Stream> GetStreamAsync(TcpClient client) => await Task.FromResult<Stream>(client.GetStream());
+        protected virtual async Task<Stream> GetStreamAsync(TcpClient client) => await Task.FromResult(client.GetStream()).ConfigureAwait(false);
 
-        // TODO rename as ????
-        public string Send(string request)
+        public byte[] Send(byte[] request)
         {
-            var x = SendAsync(request).ConfigureAwait(true).GetAwaiter();
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-            Logger?.LogInformation($"[Request]\r\n{request}");
+            Logger?.LogTrace($"[Request]\r\n{Log(request)}");
+            _stream.Write(request, 0, request.Length);
 
-            var buffer = _encoding.GetBytes(request);
-            _stream.Write(buffer, 0, buffer.Length);
-
-            using (var output = new MemoryStream(DefaultCapacity))
-            {
-                var outputBuffer = new byte[DefaultCapacity];
-                var bytes = _stream.Read(outputBuffer, 0, outputBuffer.Length);
-                output.Write(outputBuffer, 0, bytes);
-                while (_client.Available != 0)
-                {
-                    bytes = _stream.Read(outputBuffer, 0, outputBuffer.Length);
-                    output.Write(outputBuffer, 0, bytes);
-                }
-
-                var response = _encoding.GetString(output.ToArray());
-                Logger?.LogInformation($"[Response]\r\n{response}");
-                return response;
-            }
-        }
-
-        public async Task<string> SendAsync(string request, CancellationToken token = default(CancellationToken))
-        {
-            Logger?.LogInformation($"[Request]\r\n{request}");
-            await WriteRequestAsync(request, token);
-
-            var response = await ReadResponseAsync(token);
-            Logger?.LogInformation($"[Response]\r\n{response}");
+            var response = ReadResponse();
+            Logger?.LogTrace($"[Response]\r\n{Log(response)}");
             return response;
         }
 
-        private async Task WriteRequestAsync(string request, CancellationToken token)
+        public async Task<byte[]> SendAsync(byte[] request, CancellationToken token = default(CancellationToken))
         {
-            var buffer = _encoding.GetBytes(request);
-            await _stream.WriteAsync(buffer, 0, buffer.Length, token);
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            Logger?.LogTrace($"[Request]\r\n{Log(request)}");
+            await _stream.WriteAsync(request, 0, request.Length).ConfigureAwait(false);
+
+            var response = await ReadResponseAsync(token).ConfigureAwait(false);
+            Logger?.LogTrace($"[Response]\r\n{Log(response)}");
+            return response;
         }
 
-        private async Task<string> ReadResponseAsync(CancellationToken token)
+        private byte[] ReadResponse()
         {
+            // TODO change by PipeReader
             using (var output = new MemoryStream(DefaultCapacity))
             {
                 var buffer = new byte[DefaultCapacity];
-                var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token);
-                await output.WriteAsync(buffer, 0, bytes, token);
+                var bytes = _stream.Read(buffer, 0, buffer.Length);
+                output.WriteAsync(buffer, 0, bytes);
                 while (_client.Available != 0)
                 {
-                    bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token);
-                    await output.WriteAsync(buffer, 0, bytes, token);
+                    bytes = _stream.Read(buffer, 0, buffer.Length);
+                    output.WriteAsync(buffer, 0, bytes);
                 }
 
-                return _encoding.GetString(output.ToArray());
+                return output.ToArray();
+            }
+        }
+
+        private async Task<byte[]> ReadResponseAsync(CancellationToken token)
+        {
+            // TODO change by PipeReader
+            using (var output = new MemoryStream(DefaultCapacity))
+            {
+                var buffer = new byte[DefaultCapacity];
+                var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
+                while (_client.Available != 0)
+                {
+                    bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+                    await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
+                }
+
+                return output.ToArray();
             }
         }
 
@@ -132,6 +139,11 @@ namespace Framework.Caching.Transport
                     _client = null;
                 }
             }
+        }
+
+        private string Log(byte[] buffer)
+        {
+            return Encoding.UTF8.GetString(buffer);
         }
     }
 }

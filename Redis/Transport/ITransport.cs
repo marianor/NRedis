@@ -11,8 +11,8 @@ namespace Framework.Caching.Transport
 
         Task ConnectAsync(CancellationToken token);
 
-        string Send(string request);
+        byte[] Send(byte[] request);
 
-        Task<string> SendAsync(string request, CancellationToken token);
+        Task<byte[]> SendAsync(byte[] request, CancellationToken token);
     }
 }
