@@ -17,8 +17,18 @@ namespace Framework.Caching.Protocol
         {
         }
 
-        public virtual Memory<byte> Buffer => Encoding.UTF8.GetBytes(Command + (char)RespClient.CR + (char)RespClient.LF);
-
         public string Command { get; }
+
+        public virtual int Write(Memory<byte> buffer)
+        {
+            var index = 0;
+            var span = buffer.Span;
+            foreach (var b in Encoding.UTF8.GetBytes(Command))
+                span[index++] = b;
+
+            span[index++] = RespClient.CR;
+            span[index++] = RespClient.LF;
+            return index;
+        }
     }
 }

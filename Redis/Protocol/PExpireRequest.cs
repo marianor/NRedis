@@ -16,6 +16,16 @@ namespace Framework.Caching.Protocol
 
         public TimeSpan SlidingExpiration { get; }
 
-        public override Memory<byte> Buffer => new Memory<byte>(Encoding.UTF8.GetBytes(Command + " " + Key + " " + SlidingExpiration.TotalMilliseconds + (char)RespClient.CR + (char)RespClient.LF));
+        public override int Write(Memory<byte> buffer)
+        {
+            var index = 0;
+            var span = buffer.Span;
+            foreach (var b in Encoding.UTF8.GetBytes(Command + " " + Key + " " + SlidingExpiration.TotalMilliseconds))
+                span[index++] = b;
+
+            span[index++] = RespClient.CR;
+            span[index++] = RespClient.LF;
+            return index;
+        }
     }
 }

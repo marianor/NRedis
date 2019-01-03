@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Framework.Caching.Protocol.Tests
 {
@@ -10,7 +10,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireAtRequest_ThrowsIfKeyNull()
         {
-            var e =Assert.ThrowsException<ArgumentNullException>(() => new PExpireAtRequest(null, DateTimeOffset.Now));
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new PExpireAtRequest(null, DateTimeOffset.Now));
 
             Assert.AreEqual("key", e.ParamName);
         }
@@ -18,17 +18,23 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireAtRequest_ThrowsIfKeyEmpty()
         {
-            var e =Assert.ThrowsException<ArgumentException>(() => new PExpireAtRequest(string.Empty, DateTimeOffset.Now));
+            var e = Assert.ThrowsException<ArgumentException>(() => new PExpireAtRequest(string.Empty, DateTimeOffset.Now));
 
             Assert.AreEqual("key", e.ParamName);
         }
 
         [TestMethod]
-        public void Buffer_GetDatagram()
+        public void Write_GetDatagram()
         {
-            var target = new PExpireAtRequest("foo", new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero));
+            var expected = "PEXPIREAT foo 1501583410000\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
 
-            Assert.AreEqual("PEXPIREAT foo 1501583410000\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
+            var target = new PExpireAtRequest("foo", new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero));
+            var size = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }
 }

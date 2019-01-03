@@ -19,6 +19,16 @@ namespace Framework.Caching.Protocol
 
         public string Key { get; }
 
-        public override Memory<byte> Buffer => Encoding.UTF8.GetBytes(Command + " " + Key + (char)RespClient.CR + (char)RespClient.LF);
+        public override int Write(Memory<byte> buffer)
+        {
+            var index = 0;
+            var span = buffer.Span;
+            foreach (var b in Encoding.UTF8.GetBytes(Command + " " + Key))
+                span[index++] = b;
+
+            span[index++] = RespClient.CR;
+            span[index++] = RespClient.LF;
+            return index;
+        }
     }
 }

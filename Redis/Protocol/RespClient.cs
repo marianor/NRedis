@@ -1,7 +1,6 @@
 ﻿using Framework.Caching.Properties;
 using Framework.Caching.Transport;
 using System;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
@@ -59,7 +58,7 @@ namespace Framework.Caching.Protocol
 
             Connect();
             // TODO make better
-            var requestsBuffer = GetBufferAsync(requests).Result;
+            var requestsBuffer = GetBuffer(requests);
             var responseText = _transport.Send(requestsBuffer);
             return new RespParser(responseText).Parse().ToArray();
         }
@@ -73,27 +72,20 @@ namespace Framework.Caching.Protocol
 
             await ConnectAsync(token).ConfigureAwait(false);
             // TODO make better
-            var requestsBuffer = await GetBufferAsync(requests);
+            var requestsBuffer = GetBuffer(requests);
             var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
             return new RespParser(responseText).Parse().ToArray();
         }
 
-        private async static ValueTask<byte[]> GetBufferAsync(IRequest[] requests)
+        private static byte[] GetBuffer(IRequest[] requests)
         {
             // TODO improve
             var size = 0;
-            var pipe = new Pipe();
-            var memory = pipe.Writer.GetMemory(4096);
+            var memory2 = new Memory<byte>(new byte[4096]);
             foreach (var request in requests)
-            {
-                var requestBuffer = request.Buffer;
-                size += requestBuffer.Length;
-                await pipe.Writer.WriteAsync(requestBuffer);
-            }
+                size += request.Write(memory2.Slice(size));
 
-            await pipe.Writer.FlushAsync();
-            pipe.Writer.Complete();
-            return memory.Slice(0, size).ToArray();
+            return memory2.Slice(0, size).ToArray();
         }
 
         private static void VerifyConnection(IResponse[] response)

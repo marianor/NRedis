@@ -24,11 +24,17 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Buffer_GetDatagram()
+        public void Write_GetDatagram()
         {
-            var target = new KeyRequest(CommandType.Get, "foo");
+            var expected = "GET foo\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
 
-            Assert.AreEqual("GET foo\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
+            var target = new KeyRequest(CommandType.Get, "foo");
+            var size = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }
 }

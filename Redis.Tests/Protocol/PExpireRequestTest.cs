@@ -40,11 +40,17 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Buffer_GetDatagram()
+        public void Write_GetDatagram()
         {
-            var target = new PExpireRequest("foo", TimeSpan.FromHours(5));
+            var expected = "PEXPIRE foo 18000000\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
 
-            Assert.AreEqual("PEXPIRE foo 18000000\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
+            var target = new PExpireRequest("foo", TimeSpan.FromHours(5));
+            var size = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }
 }

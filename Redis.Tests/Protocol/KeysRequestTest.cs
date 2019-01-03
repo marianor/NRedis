@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Framework.Caching.Protocol.Tests
 {
@@ -11,7 +11,7 @@ namespace Framework.Caching.Protocol.Tests
         public void KeysRequest_ThrowsIfKeysNull()
         {
             string[] keys = null;
-            var e =Assert.ThrowsException<ArgumentNullException>(() => new KeysRequest(CommandType.MGet, keys));
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new KeysRequest(CommandType.MGet, keys));
 
             Assert.AreEqual("keys", e.ParamName);
         }
@@ -19,25 +19,37 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void KeysRequest_ThrowsIfKeysEmpty()
         {
-            var e =Assert.ThrowsException<ArgumentException>(() => new KeysRequest(CommandType.MGet));
+            var e = Assert.ThrowsException<ArgumentException>(() => new KeysRequest(CommandType.MGet));
 
             Assert.AreEqual("keys", e.ParamName);
         }
 
         [TestMethod]
-        public void Buffer_GetDatagramUsingOneKey()
+        public void Write_GetDatagramUsingOneKey()
         {
-            var target = new KeysRequest(CommandType.MGet, "foo");
+            var expected = "MGET foo\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
 
-            Assert.AreEqual("MGET foo\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
+            var target = new KeysRequest(CommandType.MGet, "foo");
+            var size = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
 
         [TestMethod]
-        public void Buffer_GetDatagramUsingMultipleKeys()
+        public void Write_GetDatagramUsingMultipleKeys()
         {
-            var target = new KeysRequest(CommandType.MGet, "foo", "bar");
+            var expected = "MGET foo bar\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
 
-            Assert.AreEqual("MGET foo bar\r\n", Encoding.UTF8.GetString(target.Buffer.Span));
+            var target = new KeysRequest(CommandType.MGet, "foo", "bar");
+            var size = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }
 }
