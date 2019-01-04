@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis", "Redis\Redis.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tests", "Redis.Tests\Redis.Tests.csproj", "{F208380F-ED82-4F61-9EB4-AC5EFA601C0E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tester", "RedisTester\Redis.Tester.csproj", "{86041D0E-7273-4FD5-8722-FF8E07AF4C3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tester", "Redis.Tester\Redis.Tester.csproj", "{86041D0E-7273-4FD5-8722-FF8E07AF4C3D}"
 EndProject
-Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "Redis.Resources", "..\Redis.Resources\Redis.Resources.deployproj", "{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}"
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "Redis.Resources", "Redis.Resources\Redis.Resources.deployproj", "{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,9 +11,6 @@ namespace Framework.Caching.Protocol
     // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
     {
-        internal const byte CR = (byte)'\r';
-        internal const byte LF = (byte)'\n';
-
         private readonly ITransport _transport;
         private readonly ITransportSettings _settings;
 
@@ -81,16 +78,16 @@ namespace Framework.Caching.Protocol
         {
             // TODO improve
             var size = 0;
-            var memory2 = new Memory<byte>(new byte[4096]);
+            var memory = new Memory<byte>(new byte[4096]);
             foreach (var request in requests)
-                size += request.Write(memory2.Slice(size));
+                size += request.Write(memory.Slice(size));
 
-            return memory2.Slice(0, size).ToArray();
+            return memory.Slice(0, size).ToArray();
         }
 
         private static void VerifyConnection(IResponse[] response)
         {
-            if (!Equals(response[0].Value, "OK")) // TODO Remove harcoded value
+            if (!Equals(response[0].Value, RespProtocol.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }

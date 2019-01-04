@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Redis Cache to create."
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "The pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "C",
+      "metadata": {
+        "description": "The family for the sku."
+      },
+      "allowedValues": [
+        "C",
+        "P"
+      ]
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "defaultValue": 0,
+      "metadata": {
+        "description": "The size of the new Azure Redis Cache instance. "
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "A boolean value that indicates whether to allow access via non-SSL ports."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cache/Redis",
+      "name": "[parameters('redisCacheName')]",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sourcePlatform": "Unknown",
+        "targetPlatform": "Unknown",
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "keys": {
+      "type": "object",
+      "value": "[listKeys(parameters('redisCacheName'), '2017-10-01')]"
+    }
+  }
+}

@@ -101,7 +101,7 @@ namespace Framework.Caching.Transport
 
         private async Task<byte[]> ReadResponseAsync(CancellationToken token)
         {
-            // TODO change by PipeReader
+            // TODO change by PipeReader??
             using (var output = new MemoryStream(DefaultCapacity))
             {
                 var buffer = new byte[DefaultCapacity];
@@ -141,7 +141,7 @@ namespace Framework.Caching.Transport
             }
         }
 
-        private string Log(byte[] buffer)
+        private static string Log(byte[] buffer)
         {
             return Encoding.UTF8.GetString(buffer);
         }

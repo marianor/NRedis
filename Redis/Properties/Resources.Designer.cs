@@ -70,7 +70,7 @@ namespace Framework.Caching.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid character detected at the begin of the data..
+        ///   Looks up a localized string similar to Invalid character detected at the begin of the data, near position &apos;{0}&apos;..
         /// </summary>
         internal static string ProtocolViolationInvalidBeginChar {
             get {
@@ -79,11 +79,20 @@ namespace Framework.Caching.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid character detected at the end of the data..
+        ///   Looks up a localized string similar to Invalid character detected at the end of the data, near position &apos;{0}&apos;..
         /// </summary>
         internal static string ProtocolViolationInvalidEndChar {
             get {
                 return ResourceManager.GetString("ProtocolViolationInvalidEndChar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot parse Integer value, near position &apos;{0}&apos;..
+        /// </summary>
+        internal static string ProtocolViolationParsingInteger {
+            get {
+                return ResourceManager.GetString("ProtocolViolationParsingInteger", resourceCulture);
             }
         }
     }

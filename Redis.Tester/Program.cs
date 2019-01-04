@@ -15,14 +15,18 @@ namespace RedisTester
 {
     public static class Program
     {
-        public async static Task Main(string[] args)
+        public async static Task Main()
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            var loggerFactory = GetLoggerFactory();
+            var serviceCollection = new ServiceCollection()
+                .AddLogging(builder => builder.AddConsole().AddFilter(l => true))
+                .BuildServiceProvider();
+
+            var loggerFactory = serviceCollection.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("console");
 
             try
@@ -46,7 +50,8 @@ namespace RedisTester
             {
                 Host = configuration.GetValue<string>("AzureRedis:Host"),
                 Port = configuration.GetValue<int>("AzureRedis:Port"),
-                Password = configuration.GetValue<string>("AzureRedis:Password")
+                Password = configuration.GetValue<string>("AzureRedis:Password"),
+                Logger = logger
             };
             await DoOperationsAsync(settings).ConfigureAwait(false);
         }
@@ -105,14 +110,6 @@ namespace RedisTester
                 new BinaryFormatter().Serialize(stream, value);
                 return stream.ToArray();
             }
-        }
-
-        private static ILoggerFactory GetLoggerFactory()
-        {
-            var serviceCollection = new ServiceCollection()
-                .AddLogging(builder => builder.AddConsole().AddFilter(l => true))
-                .BuildServiceProvider();
-            return serviceCollection.GetService<ILoggerFactory>();
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Framework.Caching.Properties;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Text;
 
@@ -45,51 +47,38 @@ namespace Framework.Caching.Protocol
                 case Array:
                     return new ArrayResponse(ParseArray());
                 default:
-                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar);
+                    throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidBeginChar, _index));
             }
         }
 
         private string ParseSimpleString()
         {
-            var END1 = new ReadOnlySpan<byte>(new[] { RespClient.CR, RespClient.LF });
-            var value = _response.AsSpan(_index);
-            var length = value.IndexOf(END1);
-
+            var buffer = _response.AsSpan(_index);
+            var length = buffer.IndexOf(RespProtocol.CRLF);
             if (length == -1)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
+                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
 
             _index += length + 2;
-            return Encoding.UTF8.GetString(value.Slice(0, length).ToArray());
+            return Encoding.UTF8.GetString(buffer.Slice(0, length).ToArray());
         }
 
-        private int ParseInteger()
+        private long ParseInteger()
         {
-            var number = 0;
-            var sign = 1;
+            var buffer = _response.AsSpan(_index);
+            var length = buffer.IndexOf(RespProtocol.CRLF);
+            if (length == -1)
+                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
 
-            var c = _response[_index];
-            if (c == '-')
-            {
-                sign = -1;
-                _index++;
-            }
+            if (!Utf8Parser.TryParse(buffer, out long value, out int bytesConsumed) && bytesConsumed != length)
+                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationParsingInteger, _index));
 
-            c = _response[_index++];
-            while (_index < _response.Length && c != RespClient.CR)
-            {
-                number = number * 10 + c - '0';
-                c = _response[_index++];
-            }
-
-            if (_index >= _response.Length || _response[_index++] != RespClient.LF)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
-
-            return number * sign;
+            _index += length + 2;
+            return value;
         }
 
         private string ParseBulkString()
         {
-            var length = ParseInteger();
+            var length = (int)ParseInteger();
             if (length == -1)
                 return null;
 
@@ -97,8 +86,8 @@ namespace Framework.Caching.Protocol
             _index += length;
 
             // TODO compare Spans
-            if (_index >= _response.Length || _response[_index++] != RespClient.CR || _response[_index++] != RespClient.LF)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar);
+            if (_index >= _response.Length || _response[_index++] != RespProtocol.CR || _response[_index++] != RespProtocol.LF)
+                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
 
             return value;
         }

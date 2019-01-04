@@ -23,8 +23,8 @@ namespace Framework.Caching.Protocol
             foreach (var b in Encoding.UTF8.GetBytes(Command + " " + Key + " " + Value))
                 span[index++] = b;
 
-            span[index++] = RespClient.CR;
-            span[index++] = RespClient.LF;
+            span[index++] = RespProtocol.CR;
+            span[index++] = RespProtocol.LF;
             return index;
         }
     }

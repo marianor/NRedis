@@ -2,10 +2,6 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/Redis
-/Redis/bin/Debug/netstandard2.0
-/Redis/obj
-/Redis.Tests/bin/Debug
-/Redis.Tests/obj
-/RedisTester/bin/Debug
-/RedisTester/obj
+.vs
+bin
+obj

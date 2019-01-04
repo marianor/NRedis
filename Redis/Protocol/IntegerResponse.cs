@@ -2,12 +2,9 @@
 {
     public class IntegerResponse : IResponse
     {
-        internal IntegerResponse(int value)
-        {
-            Value = value;
-        }
+        internal IntegerResponse(long value) => Value = value;
 
-        public int Value { get; }
+        public long Value { get; }
 
         object IResponse.Value => Value;
 

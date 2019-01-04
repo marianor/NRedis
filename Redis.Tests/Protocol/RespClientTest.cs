@@ -140,7 +140,7 @@ namespace Framework.Caching.Protocol.Tests
             Assert.AreEqual(1, responses.Length);
             Assert.IsInstanceOfType(responses[0], typeof(IntegerResponse));
             Assert.AreEqual(ValueType.Integer, responses[0].ValueType);
-            Assert.AreEqual(34, responses[0].Value);
+            Assert.AreEqual(34L, responses[0].Value);
         }
 
         [TestMethod]
@@ -309,7 +309,7 @@ namespace Framework.Caching.Protocol.Tests
 
             var result = (object[])responses[0].Value;
             Assert.AreEqual(1, result.Length);
-            Assert.AreEqual(10, result[0]);
+            Assert.AreEqual(10L, result[0]);
         }
 
         [TestMethod]
@@ -364,10 +364,10 @@ namespace Framework.Caching.Protocol.Tests
 
             var result = (object[])responses[0].Value;
             Assert.AreEqual(5, result.Length);
-            Assert.AreEqual(1, result[0]);
-            Assert.AreEqual(2, result[1]);
-            Assert.AreEqual(3, result[2]);
-            Assert.AreEqual(4, result[3]);
+            Assert.AreEqual(1L, result[0]);
+            Assert.AreEqual(2L, result[1]);
+            Assert.AreEqual(3L, result[2]);
+            Assert.AreEqual(4L, result[3]);
             Assert.AreEqual("foobar", result[4]);
         }
 
@@ -388,9 +388,9 @@ namespace Framework.Caching.Protocol.Tests
             Assert.AreEqual(2, result.Length);
 
             var innerResult = (object[])result[0];
-            Assert.AreEqual(1, innerResult[0]);
-            Assert.AreEqual(2, innerResult[1]);
-            Assert.AreEqual(3, innerResult[2]);
+            Assert.AreEqual(1L, innerResult[0]);
+            Assert.AreEqual(2L, innerResult[1]);
+            Assert.AreEqual(3L, innerResult[2]);
 
             innerResult = (object[])result[1];
             Assert.AreEqual("Foo", innerResult[0]);
