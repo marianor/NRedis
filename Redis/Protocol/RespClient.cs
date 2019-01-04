@@ -76,9 +76,8 @@ namespace Framework.Caching.Protocol
 
         private static byte[] GetBuffer(IRequest[] requests)
         {
-            // TODO improve
             var size = 0;
-            var memory = new Memory<byte>(new byte[4096]);
+            Memory<byte> memory = new byte[4096];
             foreach (var request in requests)
                 size += request.Write(memory.Slice(size));
 

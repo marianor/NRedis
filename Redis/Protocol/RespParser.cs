@@ -85,8 +85,8 @@ namespace Framework.Caching.Protocol
             var value = Encoding.UTF8.GetString(_response, _index, length);
             _index += length;
 
-            // TODO compare Spans
-            if (_index >= _response.Length || _response[_index++] != RespProtocol.CR || _response[_index++] != RespProtocol.LF)
+            // TODO compare Spans ???
+            if (_index >= _response.Length || _response[_index++] != RespProtocol.CRLF[0] || _response[_index++] != RespProtocol.CRLF[1])
                 throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
 
             return value;

@@ -1,5 +1,5 @@
-﻿using Framework.Caching.Properties;
-using System;
+﻿using System;
+using System.Globalization;
 using System.Text;
 
 namespace Framework.Caching.Protocol
@@ -18,14 +18,14 @@ namespace Framework.Caching.Protocol
 
         public override int Write(Memory<byte> buffer)
         {
-            var index = 0;
-            var span = buffer.Span;
-            foreach (var b in Encoding.UTF8.GetBytes(Command + " " + Key + " " + SlidingExpiration.TotalMilliseconds))
-                span[index++] = b;
-
-            span[index++] = RespProtocol.CR;
-            span[index++] = RespProtocol.LF;
-            return index;
+            var writer = new MemoryWriter(buffer);
+            writer.Write(Command);
+            writer.Write(RespProtocol.Separator);
+            writer.Write(Key);
+            writer.Write(RespProtocol.Separator);
+            writer.Write(SlidingExpiration.TotalMilliseconds);
+            writer.Write(RespProtocol.CRLF);
+            return writer.Position;
         }
     }
 }

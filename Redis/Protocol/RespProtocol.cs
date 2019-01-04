@@ -1,10 +1,12 @@
-﻿namespace Framework.Caching.Protocol
+﻿using System.Text;
+
+namespace Framework.Caching.Protocol
 {
     internal class RespProtocol
     {
-        public const byte CR = (byte)'\r';
-        public const byte LF = (byte)'\n';
-        public static readonly byte[] CRLF = { CR, LF };
         public const string Success = "OK";
+
+        public static readonly byte[] Separator = Encoding.UTF8.GetBytes(" ");
+        public static readonly byte[] CRLF = Encoding.UTF8.GetBytes("\r\n");
     }
 }

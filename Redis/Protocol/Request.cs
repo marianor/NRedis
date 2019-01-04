@@ -21,14 +21,10 @@ namespace Framework.Caching.Protocol
 
         public virtual int Write(Memory<byte> buffer)
         {
-            var index = 0;
-            var span = buffer.Span;
-            foreach (var b in Encoding.UTF8.GetBytes(Command))
-                span[index++] = b;
-
-            span[index++] = RespProtocol.CR;
-            span[index++] = RespProtocol.LF;
-            return index;
+            var writer = new MemoryWriter(buffer);
+            writer.Write(Command);
+            writer.Write(RespProtocol.CRLF);
+            return writer.Position;
         }
     }
 }
