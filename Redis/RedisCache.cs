@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,10 +19,11 @@ namespace Framework.Caching
 
         public byte[] Get(string key)
         {
-            var response = Execute(new KeyRequest(CommandType.Get, key));
+            var request = new KeyRequest(CommandType.Get, key);
+            var response = _respClient.Execute(request);
             if (response.Value == null)
                 return null;
-            return Convert.FromBase64String(response.Value as string);
+            return Decode((string)response.Value);
         }
 
         /// <summary>
@@ -31,14 +32,13 @@ namespace Framework.Caching
         /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
+        public async Task<byte[]> GetAsync(string key, CancellationToken token = default)
         {
-            var requests = Enumerable.Repeat(new KeyRequest(CommandType.Get, key), 1);
-            var responses = await _respClient.ExecuteAsync(requests, token).ConfigureAwait(false);
-            var response = responses.First();
+            var request = new KeyRequest(CommandType.Get, key);
+            var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
             if (response.Value == null)
                 return null;
-            return Convert.FromBase64String(response.Value as string);
+            return Decode((string)response.Value);
         }
 
         public void Refresh(string key)
@@ -52,24 +52,26 @@ namespace Framework.Caching
         /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public Task RefreshAsync(string key, CancellationToken token = default(CancellationToken))
+        public Task RefreshAsync(string key, CancellationToken token = default)
         {
             throw new NotImplementedException();
         }
 
         public void Remove(string key)
         {
-            _respClient.Execute(Enumerable.Repeat(new KeyRequest(CommandType.Del, key), 1));
+            var request = new KeyRequest(CommandType.Del, key);
+            _respClient.Execute(request);
+            // TODO validate response
         }
 
-        public Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
+        public Task RemoveAsync(string key, CancellationToken token = default)
         {
             throw new NotImplementedException();
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Convert.ToBase64String(value)) };
+            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Encode(value)) };
             if (options.SlidingExpiration.HasValue)
                 requests.Add(new PExpireRequest(key, options.SlidingExpiration.Value));
             else if (options.AbsoluteExpiration.HasValue)
@@ -77,7 +79,7 @@ namespace Framework.Caching
             else if (options.AbsoluteExpirationRelativeToNow.HasValue)
                 requests.Add(new PExpireAtRequest(key, DateTimeOffset.Now + options.AbsoluteExpirationRelativeToNow.Value));
 
-            var responses = _respClient.Execute(requests.ToArray()); // TODO validate responses
+            var responses = _respClient.Execute(requests); // TODO validate responses
         }
 
         /// <summary>
@@ -88,9 +90,9 @@ namespace Framework.Caching
         /// <param name="options"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
         {
-            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Convert.ToBase64String(value)) };
+            var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Encode(value)) };
             if (options.SlidingExpiration.HasValue)
                 requests.Add(new PExpireRequest(key, options.SlidingExpiration.Value));
             else if (options.AbsoluteExpiration.HasValue)
@@ -101,18 +103,16 @@ namespace Framework.Caching
             var responses = await _respClient.ExecuteAsync(requests, token).ConfigureAwait(false); // TODO validate responses
         }
 
-        private IResponse Execute(IRequest request)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string Encode(byte[] buffer)
         {
-            var requests = Enumerable.Repeat(request, 1);
-            var responses = _respClient.Execute(requests);
-            return responses.First();
+            return Convert.ToBase64String(buffer);
         }
 
-        private async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static byte[] Decode(string value)
         {
-            var requests = Enumerable.Repeat(request, 1);
-            var responses = await _respClient.ExecuteAsync(requests, token).ConfigureAwait(false);
-            return responses.First();
+            return Convert.FromBase64String(value);
         }
     }
 }

@@ -15,7 +15,8 @@ namespace Framework.Caching.Protocol
     {
         private readonly ITransport _transport;
         private readonly ITransportSettings _settings;
-        private static readonly ArrayPool<byte> _pool = ArrayPool<byte>.Create();
+        // TODO should I use a Pool here ?
+        //private static readonly ArrayPool<byte> _pool = ArrayPool<byte>.Create();
 
         public RespClient(ITransportSettings settings)
         {
@@ -75,7 +76,7 @@ namespace Framework.Caching.Protocol
             return new RespParser().Parse(responseText);
         }
 
-        public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default(CancellationToken))
+        public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -87,7 +88,7 @@ namespace Framework.Caching.Protocol
             return new RespParser().Parse(responseText).Single();
         }
 
-        public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default(CancellationToken))
+        public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default)
         {
             if (requests == null)
                 throw new ArgumentNullException(nameof(requests));

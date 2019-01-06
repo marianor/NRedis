@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using NuGet.Configuration;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
@@ -67,7 +68,7 @@ namespace RedisTester
                 {
                     Host = configuration.GetValue<string>("LocalRedis:Host"),
                     Port = configuration.GetValue<int>("LocalRedis:Port"),
-                    Logger = logger
+                    //Logger = logger
                 };
                 await DoOperationsAsync(settings).ConfigureAwait(false);
             }
@@ -95,8 +96,9 @@ namespace RedisTester
                 return null;
 
             using (var stream = new MemoryStream(serializedValue))
+            using (var zip = new GZipStream(stream, CompressionMode.Decompress))
             {
-                return new BinaryFormatter().Deserialize(stream);
+                return new BinaryFormatter().Deserialize(zip);
             }
         }
 
@@ -106,8 +108,9 @@ namespace RedisTester
                 return null;
 
             using (var stream = new MemoryStream())
+            using (var zip = new GZipStream(stream, CompressionMode.Compress))
             {
-                new BinaryFormatter().Serialize(stream, value);
+                new BinaryFormatter().Serialize(zip, value);
                 return stream.ToArray();
             }
         }

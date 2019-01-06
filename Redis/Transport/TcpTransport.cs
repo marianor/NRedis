@@ -45,7 +45,7 @@ namespace Framework.Caching.Transport
             State = TransportState.Connected;
         }
 
-        public async Task ConnectAsync(CancellationToken token = default(CancellationToken))
+        public async Task ConnectAsync(CancellationToken token = default)
         {
             _client = new TcpClient();
             await _client.ConnectAsync(Host, Port).ConfigureAwait(false);
@@ -62,24 +62,24 @@ namespace Framework.Caching.Transport
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            Logger?.LogTrace($"[Request]\r\n{Log(request)}");
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
             _stream.Write(request, 0, request.Length);
 
             var response = ReadResponse();
-            Logger?.LogTrace($"[Response]\r\n{Log(response)}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
         }
 
-        public async Task<byte[]> SendAsync(byte[] request, CancellationToken token = default(CancellationToken))
+        public async Task<byte[]> SendAsync(byte[] request, CancellationToken token = default)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            Logger?.LogTrace($"[Request]\r\n{Log(request)}");
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
             await _stream.WriteAsync(request, 0, request.Length).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
-            Logger?.LogTrace($"[Response]\r\n{Log(response)}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
         }
 
@@ -107,7 +107,7 @@ namespace Framework.Caching.Transport
             // TODO change by PipeReader??
             using (var output = new MemoryStream(DefaultCapacity))
             {
-                var buffer = new byte[DefaultCapacity];
+                var buffer = _bufferPool.Rent(DefaultCapacity);
                 var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
                 await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
                 while (_client.Available != 0)
@@ -116,6 +116,7 @@ namespace Framework.Caching.Transport
                     await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
                 }
 
+                _bufferPool.Return(buffer);
                 return output.ToArray();
             }
         }
@@ -142,11 +143,6 @@ namespace Framework.Caching.Transport
                     _client = null;
                 }
             }
-        }
-
-        private static string Log(byte[] buffer)
-        {
-            return Encoding.UTF8.GetString(buffer);
         }
     }
 }
