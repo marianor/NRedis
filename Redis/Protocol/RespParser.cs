@@ -2,13 +2,11 @@
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Net;
 using System.Text;
 
 namespace Framework.Caching.Protocol
 {
-    // TODO refactor tu use new System.Buffers.Text.Utf8Parser and System.Buffers.Text.Utf8Formatter??????
     internal class RespParser
     {
         private const byte SimpleString = (byte)'+';
@@ -17,92 +15,92 @@ namespace Framework.Caching.Protocol
         private const byte BulkString = (byte)'$';
         private const byte Array = (byte)'*';
 
-        private byte[] _response;
-        private int _index;
-
-        public RespParser(byte[] response)
+        // TODO Consider Memory<byte>
+        public IEnumerable<IResponse> Parse(byte[] buffer)
         {
-            _response = response;
+            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
+            while (buffer.Length > bufferState.Position)
+                yield return ParseElement(bufferState);
         }
 
-        public IEnumerable<IResponse> Parse()
+        private static IResponse ParseElement(BufferState state)
         {
-            var responses = new List<IResponse>();
-            while (_response.Length > _index)
-                yield return ParseElement();
-        }
-
-        private IResponse ParseElement()
-        {
-            switch (_response[_index++])
+            switch (state.Buffer[state.Position++])
             {
                 case SimpleString:
-                    return new StringResponse(ValueType.SimpleString, ParseSimpleString());
+                    return new StringResponse(ValueType.SimpleString, ParseSimpleString(state));
                 case Error:
-                    return new StringResponse(ValueType.Error, ParseSimpleString());
+                    return new StringResponse(ValueType.Error, ParseSimpleString(state));
                 case Integer:
-                    return new IntegerResponse(ParseInteger());
+                    return new IntegerResponse(ParseInteger(state));
                 case BulkString:
-                    return new StringResponse(ValueType.BulkString, ParseBulkString());
+                    return new StringResponse(ValueType.BulkString, ParseBulkString(state));
                 case Array:
-                    return new ArrayResponse(ParseArray());
+                    return new ArrayResponse(ParseArray(state));
                 default:
-                    throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidBeginChar, _index));
+                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar.Format(state.Position - 1));
             }
         }
 
-        private string ParseSimpleString()
+        private static string ParseSimpleString(BufferState state)
         {
-            var buffer = _response.AsSpan(_index);
+            var buffer = state.Buffer.AsSpan(state.Position);
             var length = buffer.IndexOf(RespProtocol.CRLF);
             if (length == -1)
-                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
-            _index += length + 2;
+            state.Position += length + 2;
             return Encoding.UTF8.GetString(buffer.Slice(0, length).ToArray());
         }
 
-        private long ParseInteger()
+        private static long ParseInteger(BufferState state)
         {
-            var buffer = _response.AsSpan(_index);
+            var buffer = state.Buffer.AsSpan(state.Position);
             var length = buffer.IndexOf(RespProtocol.CRLF);
             if (length == -1)
-                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
             if (!Utf8Parser.TryParse(buffer, out long value, out int bytesConsumed) && bytesConsumed != length)
-                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationParsingInteger, _index));
+                throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(state.Position));
 
-            _index += length + 2;
+            state.Position += length + 2;
             return value;
         }
 
-        private string ParseBulkString()
+        private static string ParseBulkString(BufferState state)
         {
-            var length = (int)ParseInteger();
+            var length = (int)ParseInteger(state);
             if (length == -1)
                 return null;
 
-            var value = Encoding.UTF8.GetString(_response, _index, length);
-            _index += length;
+            var value = Encoding.UTF8.GetString(state.Buffer, state.Position, length);
+            state.Position += length;
 
             // TODO compare Spans ???
-            if (_index >= _response.Length || _response[_index++] != RespProtocol.CRLF[0] || _response[_index++] != RespProtocol.CRLF[1])
-                throw new ProtocolViolationException(string.Format(CultureInfo.CurrentCulture, Resources.ProtocolViolationInvalidEndChar, _index));
+            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != RespProtocol.CRLF[0] || state.Buffer[state.Position + 1] != RespProtocol.CRLF[1])
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
+            state.Position += 2;
             return value;
         }
 
-        private object[] ParseArray()
+        private static object[] ParseArray(BufferState state)
         {
-            var length = ParseInteger();
+            var length = ParseInteger(state);
             if (length == -1)
                 return null;
 
             var array = new object[length];
             for (var arrayIndex = 0; arrayIndex < length; arrayIndex++)
-                array[arrayIndex] = ParseElement().Value;
+                array[arrayIndex] = ParseElement(state).Value;
 
             return array;
+        }
+
+        private class BufferState
+        {
+            public byte[] Buffer;
+            public int Position;
         }
     }
 }

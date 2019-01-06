@@ -7,7 +7,7 @@ namespace Framework.Caching.Tests
     public class RedisCacheTest
     {
         [TestMethod]
-        public void Ctor_ClientNull_Throws()
+        public void RedisCache_ClientIsNull_Throws()
         {
             var e = Assert.ThrowsException<ArgumentNullException>(() => new RedisCache(null));
 

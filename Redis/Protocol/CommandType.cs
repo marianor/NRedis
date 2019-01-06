@@ -15,7 +15,7 @@
         Set
     }
 
-    public static class CommandTypeExtensions
+    internal static class CommandTypeExtensions
     {
         public static string ToCommand(this CommandType commandType)
         {

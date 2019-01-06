@@ -8,7 +8,7 @@ namespace Framework.Caching.Protocol.Tests
     public class KeysRequestTest
     {
         [TestMethod]
-        public void KeysRequest_ThrowsIfKeysNull()
+        public void KeysRequest_KeysIsNull_Throws()
         {
             string[] keys = null;
             var e = Assert.ThrowsException<ArgumentNullException>(() => new KeysRequest(CommandType.MGet, keys));
@@ -17,7 +17,7 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void KeysRequest_ThrowsIfKeysEmpty()
+        public void KeysRequest_KeysIsEmpty_Throws()
         {
             var e = Assert.ThrowsException<ArgumentException>(() => new KeysRequest(CommandType.MGet));
 
@@ -25,7 +25,7 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_GetDatagramUsingOneKey()
+        public void Write_UsingOneKey_GetBuffer()
         {
             var expected = "MGET foo\r\n";
             var buffer = new byte[expected.Length];
@@ -39,16 +39,16 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_GetDatagramUsingMultipleKeys()
+        public void Write_UsingMultipleKeys_GetBuffer()
         {
             var expected = "MGET foo bar\r\n";
             var buffer = new byte[expected.Length];
             var memory = new Memory<byte>(buffer);
 
             var target = new KeysRequest(CommandType.MGet, "foo", "bar");
-            var size = target.Write(memory);
+            var length = target.Write(memory);
 
-            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }

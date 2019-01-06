@@ -8,7 +8,7 @@ namespace Framework.Caching.Protocol.Tests
     public class RequestTest
     {
         [TestMethod]
-        public void Request_ThrowsIfCommandNull()
+        public void Request_CommandIsNull_Throws()
         {
             var e = Assert.ThrowsException<ArgumentNullException>(() => new Request(null));
 
@@ -16,7 +16,7 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Request_ThrowsIfCommandEmpty()
+        public void Request_CommandIsEmpty_Throws()
         {
             var e = Assert.ThrowsException<ArgumentException>(() => new Request(string.Empty));
 
@@ -24,16 +24,16 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_GetDatagram()
+        public void Write_Valid_WriteBuffer()
         {
             var expected = "DBSIZE\r\n";
             var buffer = new byte[expected.Length];
             var memory = new Memory<byte>(buffer);
 
             var target = new Request(CommandType.DBSize);
-            var size = target.Write(memory);
+            var length = target.Write(memory);
 
-            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }

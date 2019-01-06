@@ -8,7 +8,7 @@ namespace Framework.Caching.Protocol.Tests
     public class KeyRequestTest
     {
         [TestMethod]
-        public void KeyRequest_ThrowsIfKeyNull()
+        public void KeyRequest_KeyIsNull_Throws()
         {
             var e = Assert.ThrowsException<ArgumentNullException>(() => new KeyRequest(CommandType.Get, null));
 
@@ -16,7 +16,7 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void KeyRequest_ThrowsIfKeyEmpty()
+        public void KeyRequest_KeyIsEmpty_Throws()
         {
             var e = Assert.ThrowsException<ArgumentException>(() => new KeyRequest(CommandType.Get, string.Empty));
 
@@ -24,16 +24,16 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_GetDatagram()
+        public void Write_Valid_WriteBuffer()
         {
             var expected = "GET foo\r\n";
             var buffer = new byte[expected.Length];
             var memory = new Memory<byte>(buffer);
 
             var target = new KeyRequest(CommandType.Get, "foo");
-            var size = target.Write(memory);
+            var length = target.Write(memory);
 
-            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }

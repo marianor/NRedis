@@ -8,7 +8,7 @@ namespace Framework.Caching.Protocol.Tests
     public class PExpireAtRequestTest
     {
         [TestMethod]
-        public void PExpireAtRequest_ThrowsIfKeyNull()
+        public void PExpireAtRequest_KeyIsNull_Throws()
         {
             var e = Assert.ThrowsException<ArgumentNullException>(() => new PExpireAtRequest(null, DateTimeOffset.Now));
 
@@ -16,7 +16,7 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void PExpireAtRequest_ThrowsIfKeyEmpty()
+        public void PExpireAtRequest_KeyIsEmpty_Throws()
         {
             var e = Assert.ThrowsException<ArgumentException>(() => new PExpireAtRequest(string.Empty, DateTimeOffset.Now));
 
@@ -24,16 +24,16 @@ namespace Framework.Caching.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_GetDatagram()
+        public void Write_Valid_WriteBuffer()
         {
             var expected = "PEXPIREAT foo 1501583410000\r\n";
             var buffer = new byte[expected.Length];
             var memory = new Memory<byte>(buffer);
 
             var target = new PExpireAtRequest("foo", new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero));
-            var size = target.Write(memory);
+            var length = target.Write(memory);
 
-            Assert.AreEqual(expected.Length, size);
+            Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
         }
     }

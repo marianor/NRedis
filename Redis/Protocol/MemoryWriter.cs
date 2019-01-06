@@ -31,12 +31,12 @@ namespace Framework.Caching.Protocol
 
         public void Write(long value)
         {
-            Write(value.ToString(CultureInfo.CurrentCulture));
+            Write(value.ToString(CultureInfo.InvariantCulture));
         }
 
         public void Write(double value)
         {
-            Write(value.ToString(CultureInfo.CurrentCulture));
+            Write(value.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

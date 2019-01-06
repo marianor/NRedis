@@ -1,12 +1,17 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Framework.Caching.Protocol
 {
     public interface IRespClient
     {
-        IResponse[] Execute(params IRequest[] requests);
+        IResponse Execute(IRequest request);
 
-        Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token);
+        IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests);
+
+        Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token);
+
+        Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token);
     }
 }

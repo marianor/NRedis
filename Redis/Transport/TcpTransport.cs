@@ -1,6 +1,7 @@
 ﻿using Framework.Caching.Properties;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -13,6 +14,7 @@ namespace Framework.Caching.Transport
     public class TcpTransport : ITransport, IDisposable
     {
         private const int DefaultCapacity = 4096;
+        private static readonly ArrayPool<byte> _bufferPool = ArrayPool<byte>.Shared;
 
         private TcpClient _client;
         private Stream _stream;
@@ -86,7 +88,7 @@ namespace Framework.Caching.Transport
             // TODO change by PipeReader
             using (var output = new MemoryStream(DefaultCapacity))
             {
-                var buffer = new byte[DefaultCapacity];
+                var buffer = _bufferPool.Rent(DefaultCapacity);
                 var bytes = _stream.Read(buffer, 0, buffer.Length);
                 output.WriteAsync(buffer, 0, bytes);
                 while (_client.Available != 0)
@@ -95,6 +97,7 @@ namespace Framework.Caching.Transport
                     output.WriteAsync(buffer, 0, bytes);
                 }
 
+                _bufferPool.Return(buffer);
                 return output.ToArray();
             }
         }

@@ -1,6 +1,8 @@
 ﻿using Framework.Caching.Properties;
 using Framework.Caching.Transport;
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
@@ -13,6 +15,7 @@ namespace Framework.Caching.Protocol
     {
         private readonly ITransport _transport;
         private readonly ITransportSettings _settings;
+        private static readonly ArrayPool<byte> _pool = ArrayPool<byte>.Create();
 
         public RespClient(ITransportSettings settings)
         {
@@ -40,53 +43,88 @@ namespace Framework.Caching.Protocol
                 await _transport.ConnectAsync(token).ConfigureAwait(false);
                 if (_settings.Password != null)
                 {
-                    var response = await ExecuteAsync(new[] { new KeyRequest(CommandType.Auth, _settings.Password) }, token).ConfigureAwait(false);
+                    var response = await ExecuteAsync(new KeyRequest(CommandType.Auth, _settings.Password), token).ConfigureAwait(false);
                     VerifyConnection(response);
                 }
             }
         }
 
-        public IResponse[] Execute(params IRequest[] requests)
+        public IResponse Execute(IRequest request)
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            Connect();
+            // TODO check
+            var requestsBuffer = GetBuffer(request);
+            var responseText = _transport.Send(requestsBuffer);
+            return new RespParser().Parse(responseText).Single();
+        }
+
+        public IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests)
         {
             if (requests == null)
                 throw new ArgumentNullException(nameof(requests));
-            if (requests.Length == 0)
+            if (!requests.Any())
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
-            // TODO make better
+            // TODO check
             var requestsBuffer = GetBuffer(requests);
             var responseText = _transport.Send(requestsBuffer);
-            return new RespParser(responseText).Parse().ToArray();
+            return new RespParser().Parse(responseText);
         }
 
-        public async Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token = default(CancellationToken))
+        public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default(CancellationToken))
+        {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            await ConnectAsync(token).ConfigureAwait(false);
+            // TODO make better
+            var requestsBuffer = GetBuffer(request);
+            var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
+            return new RespParser().Parse(responseText).Single();
+        }
+
+        public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default(CancellationToken))
         {
             if (requests == null)
                 throw new ArgumentNullException(nameof(requests));
-            if (requests.Length == 0)
+            if (!requests.Any())
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);
             // TODO make better
             var requestsBuffer = GetBuffer(requests);
             var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
-            return new RespParser(responseText).Parse().ToArray();
+            return new RespParser().Parse(responseText);
         }
 
-        private static byte[] GetBuffer(IRequest[] requests)
+        // TODO maybe extension method
+        private static byte[] GetBuffer(IRequest request)
         {
-            var size = 0;
+            // TODO use pool ?
             Memory<byte> memory = new byte[4096];
-            foreach (var request in requests)
-                size += request.Write(memory.Slice(size));
-
-            return memory.Slice(0, size).ToArray();
+            var length =  request.Write(memory);
+            return memory.Slice(0, length).ToArray();
         }
 
-        private static void VerifyConnection(IResponse[] response)
+        // TODO maybe extension method
+        private static byte[] GetBuffer(IEnumerable<IRequest> requests)
         {
-            if (!Equals(response[0].Value, RespProtocol.Success))
+            // TODO use pool ?
+            Memory<byte> memory = new byte[4096];
+            var length = 0;
+            foreach (var request in requests)
+                length += request.Write(memory.Slice(length));
+
+            return memory.Slice(0, length).ToArray();
+        }
+
+        private static void VerifyConnection(IResponse response)
+        {
+            if (!Equals(response.Value, RespProtocol.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }
