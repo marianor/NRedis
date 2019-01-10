@@ -1,5 +1,6 @@
 ﻿using Framework.Caching.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -12,9 +13,12 @@ namespace Framework.Caching
     {
         private readonly IRespClient _respClient;
 
-        public RedisCache(IRespClient client)
+        public RedisCache(IOptions<RedisCacheOptions> optionsAccessor, IRespClient client = null)
         {
-            _respClient = client ?? throw new ArgumentNullException(nameof(client));
+            if (optionsAccessor == null)
+                throw new ArgumentNullException(nameof(optionsAccessor));
+
+            _respClient = client ?? new RespClient(optionsAccessor);
         }
 
         public byte[] Get(string key)
@@ -71,6 +75,7 @@ namespace Framework.Caching
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
+            // TODO store bytes directy, remove the Encode if possible
             var requests = new List<IRequest> { new KeyValueRequest(CommandType.Set, key, Encode(value)) };
             if (options.SlidingExpiration.HasValue)
                 requests.Add(new PExpireRequest(key, options.SlidingExpiration.Value));
@@ -103,12 +108,14 @@ namespace Framework.Caching
             var responses = await _respClient.ExecuteAsync(requests, token).ConfigureAwait(false); // TODO validate responses
         }
 
+        // TODO Remove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string Encode(byte[] buffer)
         {
             return Convert.ToBase64String(buffer);
         }
 
+        // TODO Remove
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static byte[] Decode(string value)
         {

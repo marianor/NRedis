@@ -1,11 +1,9 @@
-﻿using Framework.Caching.Properties;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,10 +20,9 @@ namespace Framework.Caching.Transport
         public TcpTransport(string host, int port)
         {
             Host = host ?? throw new ArgumentNullException(nameof(host));
-            if (host.Length == 0)
-                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(host));
             if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
                 throw new ArgumentOutOfRangeException(nameof(port));
+
             Port = port;
         }
 

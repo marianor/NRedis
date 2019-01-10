@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Framework.Caching.Protocol.Tests
 {
@@ -10,7 +10,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireRequest_KeyIsNull_Throws()
         {
-            var e =Assert.ThrowsException<ArgumentNullException>(() => new PExpireRequest(null, TimeSpan.FromHours(5)));
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new PExpireRequest(null, TimeSpan.FromHours(5)));
 
             Assert.AreEqual("key", e.ParamName);
         }
@@ -18,7 +18,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireAtRequest_KeyIsEmpty_Throws()
         {
-            var e =Assert.ThrowsException<ArgumentException>(() => new PExpireRequest(string.Empty, TimeSpan.FromHours(5)));
+            var e = Assert.ThrowsException<ArgumentException>(() => new PExpireRequest(string.Empty, TimeSpan.FromHours(5)));
 
             Assert.AreEqual("key", e.ParamName);
         }
@@ -26,7 +26,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireAtRequest_SlidingExpirationIsZero_Throws()
         {
-            var e =Assert.ThrowsException<ArgumentOutOfRangeException>(() => new PExpireRequest("foo", TimeSpan.Zero));
+            var e = Assert.ThrowsException<ArgumentOutOfRangeException>(() => new PExpireRequest("foo", TimeSpan.Zero));
 
             Assert.AreEqual("slidingExpiration", e.ParamName);
         }
@@ -34,7 +34,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void PExpireAtRequest_SlidingExpirationIsNegative_Throws()
         {
-            var e =Assert.ThrowsException<ArgumentOutOfRangeException>(() => new PExpireRequest("foo", TimeSpan.FromMinutes(-1)));
+            var e = Assert.ThrowsException<ArgumentOutOfRangeException>(() => new PExpireRequest("foo", TimeSpan.FromMinutes(-1)));
 
             Assert.AreEqual("slidingExpiration", e.ParamName);
         }

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace RedisTester
+namespace Redis.Tester
 {
     public sealed class LocalRedisLauncher : IDisposable
     {
@@ -19,7 +19,8 @@ namespace RedisTester
                 {
                     WorkingDirectory = redisDirectory,
                     Arguments = @"redis.windows.conf",
-                    UseShellExecute = false
+                    UseShellExecute = false,
+                    CreateNoWindow = true
                 }
             };
 

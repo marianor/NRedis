@@ -1,40 +1,63 @@
 ﻿using Framework.Caching;
 using Framework.Caching.Protocol;
 using Framework.Caching.Transport;
+using Framework.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using NuGet.Configuration;
 using System;
 using System.IO;
-using System.IO.Compression;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
 using System.Threading.Tasks;
 
-namespace RedisTester
+namespace Redis.Tester
 {
     public static class Program
     {
+        private static readonly Random m_random = new Random();
+
+        private const string ItemKey = "Item";
+        private const string ItemsKey = "ItemArray";
+        private const string MissingKey = "Missing";
+
         public async static Task Main()
         {
+            var services = new ServiceCollection()
+                .AddLogging(b => b.AddConsole()/*.AddFilter(l => true)*/);
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            var serviceCollection = new ServiceCollection()
-                .AddLogging(builder => builder.AddConsole().AddFilter(l => true))
-                .BuildServiceProvider();
+            services.AddTransient<IDistributedCache, RedisCache>(x =>
+            {
+                var options = new RedisCacheOptions();
+                configuration.GetSection("LocalRedis").Bind(options);
+                return new RedisCache(options);
+            });
 
-            var loggerFactory = serviceCollection.GetService<ILoggerFactory>();
+            services.AddTransient<IDistributedCache, RedisCache>(x =>
+            {
+                var options = new RedisCacheOptions();
+                configuration.GetSection("AzureRedis").Bind(options);
+                return new RedisCache(options);
+            });
+
+            var provider = services.BuildServiceProvider();
+
+            var loggerFactory = provider.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("console");
 
             try
             {
-                await DoLocalOperationsAsync(configuration, logger).ConfigureAwait(false);
+                var caches = provider.GetServices<IDistributedCache>();
+                await DoLocalOperationsAsync(caches.ElementAt(0)).ConfigureAwait(false);
                 Console.WriteLine();
-                await DoAzureOperationsAsync(configuration, logger).ConfigureAwait(false);
+                await DoAzureOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -45,74 +68,66 @@ namespace RedisTester
                 Console.ReadKey();
             }
         }
-        private static async Task DoAzureOperationsAsync(IConfiguration configuration, ILogger logger)
+        private static async Task DoAzureOperationsAsync(IDistributedCache cache)
         {
-            var settings = new TransportSettings<SslTcpTransport>
-            {
-                Host = configuration.GetValue<string>("AzureRedis:Host"),
-                Port = configuration.GetValue<int>("AzureRedis:Port"),
-                Password = configuration.GetValue<string>("AzureRedis:Password"),
-                Logger = logger
-            };
-            await DoOperationsAsync(settings).ConfigureAwait(false);
+            await DoOperationsAsync(cache).ConfigureAwait(false);
         }
 
-        private static async Task DoLocalOperationsAsync(IConfiguration configuration, ILogger logger)
+        private static async Task DoLocalOperationsAsync(IDistributedCache cache)
+        {
+            using (var redisServer = new LocalRedisLauncher(Path.Combine(GetNugetFolder(), @"redis-64\3.0.503\tools")))
+                await DoOperationsAsync(cache).ConfigureAwait(false);
+        }
+
+        private static async Task DoOperationsAsync(IDistributedCache cache)
+        {
+            await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
+            await SetAsync(cache, ItemsKey, GetDataArray(10)).ConfigureAwait(false);
+
+            Console.WriteLine($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}");
+            Console.WriteLine($"Get for '{ItemsKey}': {await GetAsync<TestObject[]>(cache, ItemsKey).ConfigureAwait(false)}");
+            Console.WriteLine($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}");
+
+            cache.Remove(ItemKey);
+            Console.WriteLine($"Value '{ItemKey}' deleted: {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}");
+        }
+
+        private static async Task<string> GetAsync<T>(IDistributedCache cache, string key)
+        {
+            var buffer = await cache.GetAsync(key).ConfigureAwait(false);
+            var value = Serializer.Deserialize<T>(buffer);
+            if (value == null)
+                return "<Missing Key>";
+
+            var textValue = JsonConvert.SerializeObject(value);
+            return textValue?.Substring(0, Math.Min(textValue.Length, 98));
+        }
+
+        private static async Task SetAsync(IDistributedCache cache, string key, object value)
+        {
+            var serializedValue = Serializer.Serialize(value);
+            await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
+        }
+
+        private static string GetNugetFolder()
         {
             var nugetSettings = Settings.LoadDefaultSettings(null);
-            var folder = SettingsUtility.GetGlobalPackagesFolder(nugetSettings);
-
-            using (var redisServer = new LocalRedisLauncher(Path.Combine(folder, @"redis-64\3.0.503\tools")))
-            {
-                var settings = new TransportSettings<TcpTransport>
-                {
-                    Host = configuration.GetValue<string>("LocalRedis:Host"),
-                    Port = configuration.GetValue<int>("LocalRedis:Port"),
-                    //Logger = logger
-                };
-                await DoOperationsAsync(settings).ConfigureAwait(false);
-            }
+            return SettingsUtility.GetGlobalPackagesFolder(nugetSettings);
         }
 
-        private static async Task DoOperationsAsync(ITransportSettings settings)
+        private static TestObject GetData()
         {
-            var client = new RespClient(settings);
-
-            var cache = new RedisCache(client);
-            await cache.SetAsync("Key", Serialize("Value"), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
-            await cache.SetAsync("Key2", Serialize("Value2"), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
-
-            Console.WriteLine($"Get for 'Key': {Deserialize(await cache.GetAsync("Key").ConfigureAwait(false))}");
-            Console.WriteLine($"Get for 'Key2': {Deserialize(await cache.GetAsync("Key2").ConfigureAwait(false))}");
-            Console.WriteLine($"Get for 'NoSuchKey': {Deserialize(await cache.GetAsync("NoSuchKey").ConfigureAwait(false)) ?? "<No such key>"}");
-
-            cache.Remove("Key");
-            Console.WriteLine($"Value 'Key' deleted: {Deserialize(await cache.GetAsync("Key").ConfigureAwait(false)) ?? "<No such key>"}");
+            return new TestObject
+            {
+                Id = m_random.Next(),
+                Name = $"Name {m_random.Next()}",
+                Description = $"Description {m_random.Next()}"
+            };
         }
 
-        private static object Deserialize(byte[] serializedValue)
+        private static TestObject[] GetDataArray(int length)
         {
-            if (serializedValue == null)
-                return null;
-
-            using (var stream = new MemoryStream(serializedValue))
-            using (var zip = new GZipStream(stream, CompressionMode.Decompress))
-            {
-                return new BinaryFormatter().Deserialize(zip);
-            }
-        }
-
-        private static byte[] Serialize(object value)
-        {
-            if (value == null)
-                return null;
-
-            using (var stream = new MemoryStream())
-            using (var zip = new GZipStream(stream, CompressionMode.Compress))
-            {
-                new BinaryFormatter().Serialize(zip, value);
-                return stream.ToArray();
-            }
+            return Enumerable.Range(1, length).Select(i => GetData()).ToArray();
         }
     }
 }

@@ -1,6 +1,5 @@
-﻿using Framework.Caching.Transport;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,17 +11,18 @@ namespace Framework.Caching.Protocol.Tests
     public class RespClientTest
     {
         [TestMethod]
-        public void RespClient_SettingsIsNull_Throws()
+        public void RespClient_OptionsAccessorIsNull_Throws()
         {
-            var e = Assert.ThrowsException<ArgumentNullException>(() => new RespClient(null));
+            IOptions<RedisCacheOptions> optionsAccessor = null;
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new RespClient(optionsAccessor));
 
-            Assert.AreEqual(e.ParamName, "settings");
+            Assert.AreEqual(e.ParamName, "optionsAccessor");
         }
 
         [TestMethod]
         public void Execute_RequestIsNull_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             IRequest request = null;
             var e = Assert.ThrowsException<ArgumentNullException>(() => target.Execute(request));
 
@@ -32,7 +32,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void Execute_RequestsIsNull_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             IEnumerable<IRequest> requests = null;
             var e = Assert.ThrowsException<ArgumentNullException>(() => target.Execute(requests));
 
@@ -42,7 +42,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public void Execute_RequestsIsEmpty_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             var requests = Enumerable.Empty<IRequest>();
             var e = Assert.ThrowsException<ArgumentException>(() => target.Execute(requests));
 
@@ -52,7 +52,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public async Task ExecuteAsync_RequestIsNull_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             IRequest request = null;
             var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.ExecuteAsync(request));
 
@@ -62,7 +62,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public async Task ExecuteAsync_RequestsIsNull_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             IEnumerable<IRequest> requests = null;
             var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.ExecuteAsync(requests));
 
@@ -72,7 +72,7 @@ namespace Framework.Caching.Protocol.Tests
         [TestMethod]
         public async Task ExecuteAsync_RequestsIsEmpty_Throws()
         {
-            var target = new RespClient(Mock.Of<ITransportSettings>());
+            var target = new RespClient(new RedisCacheOptions { Host = "foo" });
             var requests = Enumerable.Empty<IRequest>();
             var e = await Assert.ThrowsExceptionAsync<ArgumentException>(() => target.ExecuteAsync(requests));
 

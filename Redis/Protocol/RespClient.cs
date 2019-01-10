@@ -1,7 +1,7 @@
 ﻿using Framework.Caching.Properties;
 using Framework.Caching.Transport;
+using Microsoft.Extensions.Options;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
@@ -13,15 +13,15 @@ namespace Framework.Caching.Protocol
     // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
     {
+        private readonly RedisCacheOptions _optionsAccessor;
         private readonly ITransport _transport;
-        private readonly ITransportSettings _settings;
         // TODO should I use a Pool here ?
         //private static readonly ArrayPool<byte> _pool = ArrayPool<byte>.Create();
 
-        public RespClient(ITransportSettings settings)
+        public RespClient(IOptions<RedisCacheOptions> optionsAccessor, ITransport transport = null)
         {
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _transport = settings.CreateTransport();
+            _optionsAccessor = optionsAccessor?.Value ?? throw new ArgumentNullException(nameof(optionsAccessor));
+            _transport = transport ?? (_optionsAccessor.UseSsl ? new SslTcpTransport(_optionsAccessor.Host, _optionsAccessor.Port) : new TcpTransport(_optionsAccessor.Host, _optionsAccessor.Port));
         }
 
         private void Connect()
@@ -29,9 +29,9 @@ namespace Framework.Caching.Protocol
             if (_transport.State == TransportState.Closed)
             {
                 _transport.Connect();
-                if (_settings.Password != null)
+                if (_optionsAccessor.Password != null)
                 {
-                    var response = Execute(new KeyRequest(CommandType.Auth, _settings.Password));
+                    var response = Execute(new KeyRequest(CommandType.Auth, _optionsAccessor.Password));
                     VerifyConnection(response);
                 }
             }
@@ -42,9 +42,9 @@ namespace Framework.Caching.Protocol
             if (_transport.State == TransportState.Closed)
             {
                 await _transport.ConnectAsync(token).ConfigureAwait(false);
-                if (_settings.Password != null)
+                if (_optionsAccessor.Password != null)
                 {
-                    var response = await ExecuteAsync(new KeyRequest(CommandType.Auth, _settings.Password), token).ConfigureAwait(false);
+                    var response = await ExecuteAsync(new KeyRequest(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
                     VerifyConnection(response);
                 }
             }
@@ -107,7 +107,7 @@ namespace Framework.Caching.Protocol
         {
             // TODO use pool ?
             Memory<byte> memory = new byte[4096];
-            var length =  request.Write(memory);
+            var length = request.Write(memory);
             return memory.Slice(0, length).ToArray();
         }
 

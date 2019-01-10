@@ -10,7 +10,7 @@ namespace Framework.Caching.Transport.Tests
         [TestMethod]
         public void TcpTransport_HostIsNull_Throws()
         {
-            var e = Assert.ThrowsException<ArgumentNullException>(() => new TcpTransport(null, 10));
+            var e = Assert.ThrowsException<ArgumentNullException>(() => new TcpTransport(null, 0));
 
             Assert.AreEqual("host", e.ParamName);
         }
@@ -34,7 +34,7 @@ namespace Framework.Caching.Transport.Tests
         [TestMethod]
         public void Send_RequestIsNull_Throws()
         {
-            var target = new TcpTransport("foo", 10);
+            var target = new TcpTransport("foo", 0);
             var e = Assert.ThrowsException<ArgumentNullException>(() => target.Send(null));
 
             Assert.AreEqual("request", e.ParamName);
@@ -43,7 +43,7 @@ namespace Framework.Caching.Transport.Tests
         [TestMethod]
         public async Task SendAsync_RequestIsNull_Throws()
         {
-            var target = new TcpTransport("foo", 10);
+            var target = new TcpTransport("foo", 0);
             var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.SendAsync(null));
 
             Assert.AreEqual("request", e.ParamName);
