@@ -1,31 +1,33 @@
-﻿using System;
-using System.Text;
-
-namespace Framework.Caching.Protocol
+﻿namespace Framework.Caching.Protocol
 {
     public class KeyValueRequest : KeyRequest
     {
-        public KeyValueRequest(string command, string key, string value) : base(command, key)
+        private readonly byte[] _value;
+
+        public KeyValueRequest(string command, string key, byte[] value) : base(command, key)
         {
-            Value = value;
+            _value = value;
+        }
+
+        public KeyValueRequest(string command, string key, string value) : this(command, key, Protocol.Encoding.GetBytes(value))
+        {
+        }
+
+        public KeyValueRequest(CommandType commandType, string key, byte[] value) : this(commandType.ToCommand(), key, value)
+        {
         }
 
         public KeyValueRequest(CommandType commandType, string key, string value) : this(commandType.ToCommand(), key, value)
         {
         }
 
-        public string Value { get; }
+        public string Value => Protocol.Encoding.GetString(_value);
 
-        public override int Write(Memory<byte> buffer)
+        private protected override void WritePayload(MemoryWriter writer)
         {
-            var writer = new MemoryWriter(buffer);
-            writer.Write(Command);
-            writer.Write(RespProtocol.Separator);
-            writer.Write(Key);
-            writer.Write(RespProtocol.Separator);
-            writer.Write(Value);
-            writer.Write(RespProtocol.CRLF);
-            return writer.Position;
+            base.WritePayload(writer);
+            writer.Write(Protocol.Separator);
+            writer.Write(_value);
         }
     }
 }

@@ -35,7 +35,7 @@ namespace Framework.Caching.Protocol.Tests
             var size = target.Write(memory);
 
             Assert.AreEqual(expected.Length, size);
-            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
+            Assert.AreEqual(expected, Protocol.Encoding.GetString(buffer));
         }
 
         [TestMethod]
@@ -49,7 +49,7 @@ namespace Framework.Caching.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
+            Assert.AreEqual(expected, Protocol.Encoding.GetString(buffer));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Text;
 
 namespace Framework.Caching.Protocol.Tests
 {
@@ -34,7 +33,7 @@ namespace Framework.Caching.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, Encoding.UTF8.GetString(buffer));
+            Assert.AreEqual(expected, Protocol.Encoding.GetString(buffer));
         }
     }
 }

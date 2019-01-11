@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Globalization;
-using System.Text;
 
 namespace Framework.Caching.Protocol
 {
@@ -16,16 +14,11 @@ namespace Framework.Caching.Protocol
 
         public TimeSpan SlidingExpiration { get; }
 
-        public override int Write(Memory<byte> buffer)
+        private protected override void WritePayload(MemoryWriter writer)
         {
-            var writer = new MemoryWriter(buffer);
-            writer.Write(Command);
-            writer.Write(RespProtocol.Separator);
-            writer.Write(Key);
-            writer.Write(RespProtocol.Separator);
+            base.WritePayload(writer);
+            writer.Write(Protocol.Separator);
             writer.Write(SlidingExpiration.TotalMilliseconds);
-            writer.Write(RespProtocol.CRLF);
-            return writer.Position;
         }
     }
 }

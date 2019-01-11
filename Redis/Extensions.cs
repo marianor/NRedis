@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Framework.Caching.Protocol;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -23,7 +24,7 @@ namespace Framework
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToLogText(this byte[] buffer)
         {
-            return Encoding.UTF8.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
+            return Protocol.Encoding.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
         }
     }
 }

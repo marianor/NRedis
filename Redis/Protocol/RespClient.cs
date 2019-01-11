@@ -125,7 +125,7 @@ namespace Framework.Caching.Protocol
 
         private static void VerifyConnection(IResponse response)
         {
-            if (!Equals(response.Value, RespProtocol.Success))
+            if (!Equals(response.Value, Protocol.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }

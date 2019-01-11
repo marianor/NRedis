@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Globalization;
-using System.Text;
 
 namespace Framework.Caching.Protocol
 {
@@ -26,7 +25,7 @@ namespace Framework.Caching.Protocol
 
         public void Write(string value)
         {
-            Write(Encoding.UTF8.GetBytes(value));
+            Write(Protocol.Encoding.GetBytes(value));
         }
 
         public void Write(long value)
