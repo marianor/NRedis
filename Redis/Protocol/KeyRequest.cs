@@ -1,7 +1,7 @@
-﻿using Framework.Caching.Properties;
+﻿using Framework.Caching.Redis.Properties;
 using System;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     public class KeyRequest : Request
     {
@@ -20,7 +20,7 @@ namespace Framework.Caching.Protocol
 
         private protected override void WritePayload(MemoryWriter writer)
         {
-            writer.Write(Protocol.Separator);
+            writer.Write(RespProtocol.Separator);
             writer.Write(Key);
         }
     }

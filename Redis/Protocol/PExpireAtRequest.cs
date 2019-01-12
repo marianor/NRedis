@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     public class PExpireAtRequest : KeyRequest
     {
@@ -14,7 +14,7 @@ namespace Framework.Caching.Protocol
         private protected override void WritePayload(MemoryWriter writer)
         {
             base.WritePayload(writer);
-            writer.Write(Protocol.Separator);
+            writer.Write(RespProtocol.Separator);
             writer.Write(AbsoluteExpiration.ToUnixTimeMilliseconds());
         }
     }

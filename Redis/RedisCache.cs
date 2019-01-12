@@ -1,4 +1,4 @@
-﻿using Framework.Caching.Protocol;
+﻿using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System;
@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching
+namespace Framework.Caching.Redis
 {
     public class RedisCache : IDistributedCache
     {

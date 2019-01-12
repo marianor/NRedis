@@ -3,7 +3,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Transport
+namespace Framework.Caching.Redis.Transport
 {
     public class SslTcpTransport : TcpTransport
     {

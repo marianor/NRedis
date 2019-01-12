@@ -1,4 +1,4 @@
-﻿namespace Framework.Caching.Transport
+﻿namespace Framework.Caching.Redis.Transport
 {
     public enum TransportState
     {

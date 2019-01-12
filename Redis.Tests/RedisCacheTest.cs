@@ -1,4 +1,6 @@
 ﻿using Framework.Caching.Protocol;
+using Framework.Caching.Redis;
+using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

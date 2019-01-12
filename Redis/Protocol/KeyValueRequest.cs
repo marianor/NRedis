@@ -1,4 +1,4 @@
-﻿namespace Framework.Caching.Protocol
+﻿namespace Framework.Caching.Redis.Protocol
 {
     public class KeyValueRequest : KeyRequest
     {
@@ -9,7 +9,7 @@
             _value = value;
         }
 
-        public KeyValueRequest(string command, string key, string value) : this(command, key, Protocol.Encoding.GetBytes(value))
+        public KeyValueRequest(string command, string key, string value) : this(command, key, RespProtocol.Encoding.GetBytes(value))
         {
         }
 
@@ -21,12 +21,12 @@
         {
         }
 
-        public string Value => Protocol.Encoding.GetString(_value);
+        public string Value => RespProtocol.Encoding.GetString(_value);
 
         private protected override void WritePayload(MemoryWriter writer)
         {
             base.WritePayload(writer);
-            writer.Write(Protocol.Separator);
+            writer.Write(RespProtocol.Separator);
             writer.Write(_value);
         }
     }

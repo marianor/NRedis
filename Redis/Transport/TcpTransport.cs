@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Transport
+namespace Framework.Caching.Redis.Transport
 {
     public class TcpTransport : ITransport, IDisposable
     {

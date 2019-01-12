@@ -1,7 +1,7 @@
-﻿using Framework.Caching.Properties;
+﻿using Framework.Caching.Redis.Properties;
 using System;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     public class Request : IRequest
     {
@@ -14,21 +14,21 @@ namespace Framework.Caching.Protocol
             if (command.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(command));
 
-            _command = Protocol.Encoding.GetBytes(command);
+            _command = RespProtocol.Encoding.GetBytes(command);
         }
 
         public Request(CommandType commandType) : this(commandType.ToCommand())
         {
         }
 
-        public string Command => Protocol.Encoding.GetString(_command);
+        public string Command => RespProtocol.Encoding.GetString(_command);
 
         public int Write(Memory<byte> buffer)
         {
             var writer = new MemoryWriter(buffer);
             writer.Write(_command);
             WritePayload(writer);
-            writer.Write(Protocol.CRLF);
+            writer.Write(RespProtocol.CRLF);
             return writer.Position;
         }
 

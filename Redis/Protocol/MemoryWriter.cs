@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     internal class MemoryWriter
     {
@@ -25,7 +25,7 @@ namespace Framework.Caching.Protocol
 
         public void Write(string value)
         {
-            Write(Protocol.Encoding.GetBytes(value));
+            Write(RespProtocol.Encoding.GetBytes(value));
         }
 
         public void Write(long value)

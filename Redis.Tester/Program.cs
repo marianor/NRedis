@@ -1,7 +1,4 @@
-﻿using Framework.Caching;
-using Framework.Caching.Protocol;
-using Framework.Caching.Transport;
-using Framework.DependencyInjection;
+﻿using Framework.Caching.Redis;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

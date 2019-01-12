@@ -31,7 +31,8 @@ namespace Redis.Tester
 
         public void Dispose()
         {
-            _redisServer.Kill();
+            if (!_redisServer.HasExited)
+                _redisServer.Kill();
             _redisServer.Dispose();
             GC.SuppressFinalize(this);
         }

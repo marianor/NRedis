@@ -1,11 +1,10 @@
-﻿using Framework.Caching.Protocol;
+﻿using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-namespace Framework
+namespace Framework.Caching.Redis
 {
     internal static class StringExtensions
     {
@@ -24,7 +23,7 @@ namespace Framework
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToLogText(this byte[] buffer)
         {
-            return Protocol.Encoding.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
+            return RespProtocol.Encoding.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
         }
     }
 }

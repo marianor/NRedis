@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Transport
+namespace Framework.Caching.Redis.Transport
 {
     public interface ITransport
     {

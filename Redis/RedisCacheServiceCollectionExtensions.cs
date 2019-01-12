@@ -1,4 +1,4 @@
-﻿using Framework.Caching;
+﻿using Framework.Caching.Redis;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

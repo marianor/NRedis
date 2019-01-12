@@ -1,8 +1,8 @@
 ﻿using System.Text;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
-    internal class Protocol
+    internal class RespProtocol
     {
         public static readonly Encoding Encoding = Encoding.UTF8;
 

@@ -1,11 +1,10 @@
-﻿using Framework.Caching.Properties;
+﻿using Framework.Caching.Redis.Properties;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Net;
-using System.Text;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     internal class RespParser
     {
@@ -45,18 +44,18 @@ namespace Framework.Caching.Protocol
         private static string ParseSimpleString(BufferState state)
         {
             var buffer = state.Buffer.AsSpan(state.Position);
-            var length = buffer.IndexOf(Protocol.CRLF);
+            var length = buffer.IndexOf(RespProtocol.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
             state.Position += length + 2;
-            return Protocol.Encoding.GetString(buffer.Slice(0, length).ToArray());
+            return RespProtocol.Encoding.GetString(buffer.Slice(0, length).ToArray());
         }
 
         private static long ParseInteger(BufferState state)
         {
             var buffer = state.Buffer.AsSpan(state.Position);
-            var length = buffer.IndexOf(Protocol.CRLF);
+            var length = buffer.IndexOf(RespProtocol.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
@@ -73,11 +72,11 @@ namespace Framework.Caching.Protocol
             if (length == -1)
                 return null;
 
-            var value = Protocol.Encoding.GetString(state.Buffer, state.Position, length);
+            var value = RespProtocol.Encoding.GetString(state.Buffer, state.Position, length);
             state.Position += length;
 
             // TODO compare Spans ???
-            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != Protocol.CRLF[0] || state.Buffer[state.Position + 1] != Protocol.CRLF[1])
+            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != RespProtocol.CRLF[0] || state.Buffer[state.Position + 1] != RespProtocol.CRLF[1])
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
             state.Position += 2;

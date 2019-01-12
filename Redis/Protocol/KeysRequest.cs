@@ -1,22 +1,17 @@
-﻿using Framework.Caching.Properties;
+﻿using Framework.Caching.Redis.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     public class KeysRequest : Request
     {
-        private readonly byte[][] _keys;
-
         public KeysRequest(string command, IEnumerable<string> keys) : base(command)
         {
-            if (keys == null)
-                throw new ArgumentNullException(nameof(keys));
+            Keys = keys ?? throw new ArgumentNullException(nameof(keys));
             if (!keys.Any())
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(keys));
-
-            _keys = keys.Select(k => Protocol.Encoding.GetBytes(k)).ToArray();
         }
 
         public KeysRequest(string command, params string[] keys) : this(command, (IEnumerable<string>)keys)
@@ -31,13 +26,13 @@ namespace Framework.Caching.Protocol
         {
         }
 
-        public IEnumerable<string> Keys => _keys.Select(k => Protocol.Encoding.GetString(k));
+        public IEnumerable<string> Keys { get; }
 
         private protected override void WritePayload(MemoryWriter writer)
         {
-            foreach (var key in _keys)
+            foreach (var key in Keys)
             {
-                writer.Write(Protocol.Separator);
+                writer.Write(RespProtocol.Separator);
                 writer.Write(key);
             }
         }

@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Transport.Tests
+namespace Framework.Caching.Redis.Transport.Tests
 {
     [TestClass]
     public class TcpTransportTest

@@ -1,4 +1,4 @@
-﻿namespace Framework.Caching.Protocol
+﻿namespace Framework.Caching.Redis.Protocol
 {
     public class IntegerResponse : IResponse
     {

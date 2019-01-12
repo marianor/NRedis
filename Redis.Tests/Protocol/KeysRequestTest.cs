@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Framework.Caching.Redis.Protocol;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Text;
 
@@ -35,7 +36,7 @@ namespace Framework.Caching.Protocol.Tests
             var size = target.Write(memory);
 
             Assert.AreEqual(expected.Length, size);
-            Assert.AreEqual(expected, Protocol.Encoding.GetString(buffer));
+            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(buffer));
         }
 
         [TestMethod]
@@ -49,7 +50,7 @@ namespace Framework.Caching.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, Protocol.Encoding.GetString(buffer));
+            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(buffer));
         }
     }
 }

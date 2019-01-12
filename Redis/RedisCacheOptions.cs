@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
 
-namespace Framework.Caching
+namespace Framework.Caching.Redis
 {
     /// <summary>
-    /// Configuration options for <see cref="Framework.Caching.Redis.RedisCache" />.
+    /// Configuration options for <see cref="RedisCache" />.
     /// </summary>
     public sealed class RedisCacheOptions : IOptions<RedisCacheOptions>
     {

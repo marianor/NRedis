@@ -1,5 +1,5 @@
-﻿using Framework.Caching.Properties;
-using Framework.Caching.Transport;
+﻿using Framework.Caching.Redis.Properties;
+using Framework.Caching.Redis.Transport;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Protocol
+namespace Framework.Caching.Redis.Protocol
 {
     // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
@@ -125,7 +125,7 @@ namespace Framework.Caching.Protocol
 
         private static void VerifyConnection(IResponse response)
         {
-            if (!Equals(response.Value, Protocol.Success))
+            if (!Equals(response.Value, RespProtocol.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }

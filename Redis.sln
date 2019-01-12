@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tester", "Redis.Teste
 EndProject
 Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "Redis.Resources", "Redis.Resources\Redis.Resources.deployproj", "{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Redis.Bechmarks", "Redis.Bechmarks\Redis.Bechmarks.csproj", "{8008FEC5-2231-452C-99D9-7EE6A138C89A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8008FEC5-2231-452C-99D9-7EE6A138C89A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8008FEC5-2231-452C-99D9-7EE6A138C89A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8008FEC5-2231-452C-99D9-7EE6A138C89A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8008FEC5-2231-452C-99D9-7EE6A138C89A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,4 @@
-﻿namespace Redis.Tester
+﻿namespace Redis
 {
     public class TestObject
     {
