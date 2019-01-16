@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace Framework.Caching.Protocol.Tests
+namespace Framework.Caching.Redis.Protocol.Tests
 {
     [TestClass]
     public class KeyValueRequestTest

@@ -10,8 +10,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Framework.Caching.Tests</AssemblyName>
-    <RootNamespace>Framework.Caching.Tests</RootNamespace>
+    <AssemblyName>Framework.Caching.Redis.Tests</AssemblyName>
+    <RootNamespace>Framework.Caching.Redis.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

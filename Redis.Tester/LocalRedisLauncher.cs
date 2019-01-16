@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace Redis.Tester
+namespace Framework.Caching.Redis.Tester
 {
     public sealed class LocalRedisLauncher : IDisposable
     {

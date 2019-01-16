@@ -9,7 +9,7 @@ namespace Framework.Caching.Redis.Protocol
             AbsoluteExpiration = absoluteExpiration;
         }
 
-        private DateTimeOffset AbsoluteExpiration { get; }
+        public DateTimeOffset AbsoluteExpiration { get; }
 
         private protected override void WritePayload(MemoryWriter writer)
         {

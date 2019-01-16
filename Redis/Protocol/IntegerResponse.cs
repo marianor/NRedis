@@ -1,13 +1,22 @@
-﻿namespace Framework.Caching.Redis.Protocol
+﻿using System.Buffers.Text;
+
+namespace Framework.Caching.Redis.Protocol
 {
     public class IntegerResponse : IResponse
     {
-        internal IntegerResponse(long value) => Value = value;
+        private readonly byte[] _value;
 
-        public long Value { get; }
+        internal IntegerResponse(byte[] value) => _value = value;
+
+        public long Value => Utf8Parser.TryParse(_value, out long value, out int bytesConsumed) ? value : default;
 
         object IResponse.Value => Value;
 
         public ValueType ValueType => ValueType.Integer;
+
+        public byte[] GetRawValue()
+        {
+            return _value;
+        }
     }
 }

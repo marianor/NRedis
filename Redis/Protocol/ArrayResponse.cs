@@ -11,5 +11,10 @@ namespace Framework.Caching.Redis.Protocol
         object IResponse.Value => Value;
 
         public ValueType ValueType => ValueType.Array;
+
+        public byte[] GetRawValue()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

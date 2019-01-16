@@ -1,9 +1,8 @@
-﻿using Framework.Caching.Redis.Protocol;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Net;
 
-namespace Framework.Caching.Protocol.Tests
+namespace Framework.Caching.Redis.Protocol.Tests
 {
     [TestClass]
     public class RespParserTest

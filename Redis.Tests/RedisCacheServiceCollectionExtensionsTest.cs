@@ -1,10 +1,13 @@
 ﻿using Framework.DependencyInjection;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Framework.Caching.Tests
+namespace Framework.Caching.Redis.Tests
 {
     [TestClass]
     public class RedisCacheServiceCollectionExtensionsTest
@@ -28,12 +31,18 @@ namespace Framework.Caching.Tests
         }
 
         [TestMethod]
-        public void AddDistributedRedisCache_1SetupActionIsNull_Throws()
+        public void AddDistributedRedisCache_Valid_ExecutesSetupAction()
         {
-            var services = Mock.Of<IServiceCollection>();
+            var descriptors = new List<ServiceDescriptor>();
+            var servicesMock = new Mock<IServiceCollection>();
+            servicesMock.Setup(x => x.GetEnumerator()).Returns(() => descriptors.GetEnumerator());
+            servicesMock.Setup(x => x.Add(It.IsAny<ServiceDescriptor>())).Callback<ServiceDescriptor>(s => descriptors.Add(s));
 
-            var e = Assert.ThrowsException<ArgumentNullException>(() => services.AddDistributedRedisCache(null));
-            Assert.AreEqual("setupAction", e.ParamName);
+            servicesMock.Object.AddDistributedRedisCache(o => { });
+
+            var descriptor = descriptors.Single(d => d.ServiceType == typeof(IDistributedCache));
+            Assert.AreEqual(ServiceLifetime.Singleton, descriptor.Lifetime);
+            Assert.AreEqual(typeof(RedisCache), descriptor.ImplementationType);
         }
     }
 }

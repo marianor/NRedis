@@ -2,16 +2,23 @@
 {
     public class StringResponse : IResponse
     {
-        internal StringResponse(ValueType valueType, string value)
+        private readonly byte[] _value;
+
+        internal StringResponse(ValueType valueType, byte[] value)
         {
             ValueType = valueType;
-            Value = value;
+            _value = value;
         }
 
         public ValueType ValueType { get; }
 
-        public string Value { get; }
+        public string Value => _value == null ? null : RespProtocol.Encoding.GetString(_value);
 
         object IResponse.Value => Value;
+
+        public byte[] GetRawValue()
+        {
+            return _value;
+        }
     }
 }

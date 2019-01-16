@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>Framework.Caching.Tests</_Parameter1>
+      <_Parameter1>Framework.Caching.Redis.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

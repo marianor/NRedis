@@ -1,13 +1,11 @@
-﻿using Framework.Caching.Redis;
-using Framework.Caching.Redis.Protocol;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Protocol.Tests
+namespace Framework.Caching.Redis.Protocol.Tests
 {
     [TestClass]
     public class RespClientTest

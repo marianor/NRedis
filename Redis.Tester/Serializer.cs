@@ -2,7 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace Redis
+namespace Framework.Caching.Redis
 {
     public static class Serializer
     {

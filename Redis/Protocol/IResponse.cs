@@ -5,5 +5,7 @@
         object Value { get; }
 
         ValueType ValueType { get; }
+
+        byte[] GetRawValue();
     }
 }

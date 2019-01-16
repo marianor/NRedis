@@ -11,6 +11,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <LangVersion>7.3</LangVersion>
+    <AssemblyName>Framework.Caching.Redis.Tester</AssemblyName>
+    <RootNamespace>Framework.Caching.Redis.Tester</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
