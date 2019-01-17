@@ -96,6 +96,8 @@ namespace Framework.Caching.Redis.Tests
             respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))));
         }
 
+        // TODO need to more cases
+
         [TestMethod]
         public void Set_ValidKeyWithAbsoluteExpiration_InvokeExecute()
         {
@@ -183,7 +185,7 @@ namespace Framework.Caching.Redis.Tests
                     && expireAt.Key == expectedKey
                     && expireAt.AbsoluteExpiration == expectedExpiration;
             });
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))));
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()));
         }
         // TODO refresh
         // TODO Remove

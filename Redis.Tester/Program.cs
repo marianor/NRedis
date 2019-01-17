@@ -1,5 +1,4 @@
-﻿using Framework.Caching.Redis;
-using Microsoft.Extensions.Caching.Distributed;
+﻿using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,7 @@ namespace Framework.Caching.Redis.Tester
         public async static Task Main()
         {
             var services = new ServiceCollection()
-                .AddLogging(b => b.AddConsole()/*.AddFilter(l => true)*/);
+                .AddLogging(b => b.AddConsole().AddFilter(l => true));
 
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -52,13 +51,13 @@ namespace Framework.Caching.Redis.Tester
             try
             {
                 var caches = provider.GetServices<IDistributedCache>();
-                await DoLocalOperationsAsync(caches.ElementAt(0)).ConfigureAwait(false);
-                Console.WriteLine();
+                await DoLocalOperationsAsync(caches.First()).ConfigureAwait(false);
+                await Console.Out.WriteLineAsync().ConfigureAwait(false);
                 await DoAzureOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                await Console.Out.WriteLineAsync(e.ToString()).ConfigureAwait(false);
             }
             finally
             {
@@ -81,12 +80,12 @@ namespace Framework.Caching.Redis.Tester
             await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
             await SetAsync(cache, ItemsKey, GetDataArray(10)).ConfigureAwait(false);
 
-            Console.WriteLine($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}");
-            Console.WriteLine($"Get for '{ItemsKey}': {await GetAsync<TestObject[]>(cache, ItemsKey).ConfigureAwait(false)}");
-            Console.WriteLine($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}");
+            await Console.Out.WriteLineAsync($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await Console.Out.WriteLineAsync($"Get for '{ItemsKey}': {await GetAsync<TestObject[]>(cache, ItemsKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await Console.Out.WriteLineAsync($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}").ConfigureAwait(false);
 
             cache.Remove(ItemKey);
-            Console.WriteLine($"Value '{ItemKey}' deleted: {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}");
+            await Console.Out.WriteLineAsync($"Value '{ItemKey}' deleted: {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);
         }
 
         private static async Task<string> GetAsync<T>(IDistributedCache cache, string key)
