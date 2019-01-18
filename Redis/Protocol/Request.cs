@@ -59,6 +59,12 @@ namespace Framework.Caching.Redis.Protocol
                     writer.Write(bytesArg);
                 else if (arg is string stringArg)
                     writer.Write(stringArg);
+                else if (arg is DateTime dateTimeArg)
+                    writer.Write(((DateTimeOffset)dateTimeArg).ToUnixTimeMilliseconds());
+                else if (arg is DateTimeOffset dateTimeOffsetArg)
+                    writer.Write(dateTimeOffsetArg.ToUnixTimeMilliseconds());
+                else if (arg is TimeSpan timeSpanArg)
+                    writer.Write(timeSpanArg.TotalMilliseconds);
             }
         }
     }
