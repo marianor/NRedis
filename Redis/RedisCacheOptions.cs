@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Framework.Caching.Redis
 {
@@ -8,6 +9,8 @@ namespace Framework.Caching.Redis
     public sealed class RedisCacheOptions : IOptions<RedisCacheOptions>
     {
         public string Host { get; set; }
+
+        public ILoggerFactory LoggerFactory { get; set; }
 
         public int Port { get; set; } = 6380;
 

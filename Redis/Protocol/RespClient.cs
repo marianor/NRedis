@@ -1,5 +1,6 @@
 ﻿using Framework.Caching.Redis.Properties;
 using Framework.Caching.Redis.Transport;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace Framework.Caching.Redis.Protocol
         {
             _optionsAccessor = optionsAccessor?.Value ?? throw new ArgumentNullException(nameof(optionsAccessor));
             _transport = transport ?? (_optionsAccessor.UseSsl ? new SslTcpTransport(_optionsAccessor.Host, _optionsAccessor.Port) : new TcpTransport(_optionsAccessor.Host, _optionsAccessor.Port));
+            _transport.Logger = optionsAccessor.Value.LoggerFactory?.CreateLogger(_transport.GetType());
         }
 
         private void Connect()
@@ -31,7 +33,7 @@ namespace Framework.Caching.Redis.Protocol
                 _transport.Connect();
                 if (_optionsAccessor.Password != null)
                 {
-                    var response = Execute(new KeyRequest(CommandType.Auth, _optionsAccessor.Password));
+                    var response = Execute(new Request(CommandType.Auth, _optionsAccessor.Password));
                     VerifyConnection(response);
                 }
             }
@@ -44,7 +46,7 @@ namespace Framework.Caching.Redis.Protocol
                 await _transport.ConnectAsync(token).ConfigureAwait(false);
                 if (_optionsAccessor.Password != null)
                 {
-                    var response = await ExecuteAsync(new KeyRequest(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
+                    var response = await ExecuteAsync(new Request(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
                     VerifyConnection(response);
                 }
             }

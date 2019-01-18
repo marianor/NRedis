@@ -1,10 +1,13 @@
-﻿using System.Threading;
+﻿using Microsoft.Extensions.Logging;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Framework.Caching.Redis.Transport
 {
     public interface ITransport
     {
+        ILogger Logger { get; set; }
+
         TransportState State { get; }
 
         void Connect();

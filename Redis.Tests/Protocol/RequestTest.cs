@@ -23,13 +23,41 @@ namespace Framework.Caching.Redis.Protocol.Tests
         }
 
         [TestMethod]
-        public void Write_Valid_WriteBuffer()
+        public void Write_WithNoArgs_WriteBuffer()
         {
             var expected = "DBSIZE\r\n";
             var buffer = new byte[expected.Length];
             var memory = new Memory<byte>(buffer);
 
             var target = new Request(CommandType.DBSize);
+            var length = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, length);
+            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(buffer));
+        }
+
+        [TestMethod]
+        public void Write_WithKey_WriteBuffer()
+        {
+            var expected = "GET foo\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
+
+            var target = new Request(CommandType.Get, "foo");
+            var length = target.Write(memory);
+
+            Assert.AreEqual(expected.Length, length);
+            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(buffer));
+        }
+
+        [TestMethod]
+        public void Write_WithKeyValue_GetBuffer()
+        {
+            var expected = "GETSET foo bar\r\n";
+            var buffer = new byte[expected.Length];
+            var memory = new Memory<byte>(buffer);
+
+            var target = new Request(CommandType.GetSet, "foo", "bar");
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);

@@ -3,8 +3,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -83,17 +81,22 @@ namespace Framework.Caching.Redis.Tests
         {
             var respClientMock = new Mock<IRespClient>();
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
-            const string expectedKey = "foo";
-            const string expectedValue = "bar";
+            var expectedKey = "foo";
+            var expectedValue = RespProtocol.Encoding.GetBytes("bar");
 
-            target.Set(expectedKey, RespProtocol.Encoding.GetBytes(expectedValue));
+            target.Set(expectedKey, expectedValue);
 
-            var assert = new Func<IEnumerable<IRequest>, bool>(requests =>
+            IRequest request = null;
+            var assert = new Func<IRequest, bool>(r =>
             {
-                var request = (KeyValueRequest)requests.Single();
-                return request.Command == "SET" && request.Key == expectedKey && request.Value == expectedValue;
+                request = r;
+                return r != null;
             });
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))));
+            respClientMock.Verify(c => c.Execute(It.Is<IRequest>(r => assert(r))), Times.Once());
+            Assert.AreEqual(2, request.GetArgs().Length);
+            Assert.AreEqual("SET", request.Command);
+            Assert.AreEqual(expectedKey, request.GetArg<string>(0));
+            CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(1));
         }
 
         // TODO need to more cases
@@ -103,25 +106,24 @@ namespace Framework.Caching.Redis.Tests
         {
             var respClientMock = new Mock<IRespClient>();
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
-            const string expectedKey = "foo";
-            const string expectedValue = "bar";
+            var expectedKey = "foo";
+            var expectedValue = RespProtocol.Encoding.GetBytes("bar");
             var expectedExpiration = DateTime.Now.AddHours(1);
 
-            target.Set(expectedKey, RespProtocol.Encoding.GetBytes(expectedValue), new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
+            target.Set(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
 
-            var assert = new Func<IEnumerable<IRequest>, bool>(requests =>
+            IRequest request = null;
+            var assert = new Func<IRequest, bool>(r =>
             {
-                var keyValue = (KeyValueRequest)requests.First();
-                var expireAt = (PExpireAtRequest)requests.ElementAt(1);
-                return requests.Count() == 2
-                    && keyValue.Command == "SET"
-                    && keyValue.Key == expectedKey
-                    && keyValue.Value == expectedValue
-                    && expireAt.Command == "PEXPIREAT"
-                    && expireAt.Key == expectedKey
-                    && expireAt.AbsoluteExpiration == expectedExpiration;
+                request = r;
+                return r != null;
             });
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))));
+            respClientMock.Verify(c => c.Execute(It.Is<IRequest>(r => assert(r))), Times.Once());
+            Assert.AreEqual(3, request.GetArgs().Length);
+            Assert.AreEqual("SET", request.Command);
+            Assert.AreEqual(expectedKey, request.GetArg<string>(0));
+            CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(1));
+            StringAssert.StartsWith(request.GetArg<string>(2), "PX ");
         }
 
         [TestMethod]
@@ -146,20 +148,24 @@ namespace Framework.Caching.Redis.Tests
         public async Task SetAsync_ValidKey_InvokeExecuteAsync()
         {
             var respClientMock = new Mock<IRespClient>();
+
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
-            const string expectedKey = "foo";
-            const string expectedValue = "bar";
+            var expectedKey = "foo";
+            var expectedValue = RespProtocol.Encoding.GetBytes("bar");
 
-            await target.SetAsync(expectedKey, RespProtocol.Encoding.GetBytes(expectedValue));
+            await target.SetAsync(expectedKey, expectedValue);
 
-            var assert = new Func<IEnumerable<IRequest>, bool>(requests =>
+            IRequest request = null;
+            var assert = new Func<IRequest, bool>(r =>
             {
-                var request = (KeyValueRequest)requests.Single();
-                return request.Command == "SET"
-                    && request.Key == expectedKey
-                    && request.Value == expectedValue;
+                request = r;
+                return r != null;
             });
-            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()));
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IRequest>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
+            Assert.AreEqual(2, request.GetArgs().Length);
+            Assert.AreEqual("SET", request.Command);
+            Assert.AreEqual(expectedKey, request.GetArg<string>(0));
+            CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(1));
         }
 
         [TestMethod]
@@ -167,25 +173,24 @@ namespace Framework.Caching.Redis.Tests
         {
             var respClientMock = new Mock<IRespClient>();
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
-            const string expectedKey = "foo";
-            const string expectedValue = "bar";
+            var expectedKey = "foo";
+            var expectedValue = RespProtocol.Encoding.GetBytes("bar");
             var expectedExpiration = DateTime.Now.AddHours(1);
 
-            await target.SetAsync(expectedKey, RespProtocol.Encoding.GetBytes(expectedValue), new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
+            await target.SetAsync(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
 
-            var assert = new Func<IEnumerable<IRequest>, bool>(requests =>
+            IRequest request = null;
+            var assert = new Func<IRequest, bool>(r =>
             {
-                var keyValue = (KeyValueRequest)requests.First();
-                var expireAt = (PExpireAtRequest)requests.ElementAt(1);
-                return requests.Count() == 2
-                    && keyValue.Command == "SET"
-                    && keyValue.Key == expectedKey
-                    && keyValue.Value == expectedValue
-                    && expireAt.Command == "PEXPIREAT"
-                    && expireAt.Key == expectedKey
-                    && expireAt.AbsoluteExpiration == expectedExpiration;
+                request = r;
+                return r != null;
             });
-            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()));
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IRequest>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
+            Assert.AreEqual(3, request.GetArgs().Length);
+            Assert.AreEqual("SET", request.Command);
+            Assert.AreEqual(expectedKey, request.GetArg<string>(0));
+            CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(1));
+            StringAssert.StartsWith(request.GetArg<string>(2), "PX ");
         }
         // TODO refresh
         // TODO Remove
