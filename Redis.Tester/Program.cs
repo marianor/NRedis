@@ -16,6 +16,7 @@ namespace Framework.Caching.Redis.Tester
         private static readonly Random m_random = new Random();
 
         private const string ItemKey = "Item";
+        private const string DeletedKey = "Deleted";
         private const string ItemsKey = "ItemArray";
         private const string MissingKey = "Missing";
 
@@ -80,13 +81,15 @@ namespace Framework.Caching.Redis.Tester
         {
             await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
             await SetAsync(cache, ItemsKey, GetDataArray(10)).ConfigureAwait(false);
+            await SetAsync(cache, DeletedKey, GetData()).ConfigureAwait(false);
 
             await Console.Out.WriteLineAsync($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);
             await Console.Out.WriteLineAsync($"Get for '{ItemsKey}': {await GetAsync<TestObject[]>(cache, ItemsKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await Console.Out.WriteLineAsync($"Get for '{DeletedKey}': {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
             await Console.Out.WriteLineAsync($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}").ConfigureAwait(false);
 
-            cache.Remove(ItemKey);
-            await Console.Out.WriteLineAsync($"Value '{ItemKey}' deleted: {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await cache.RemoveAsync(DeletedKey).ConfigureAwait(false);
+            await Console.Out.WriteLineAsync($"Value '{DeletedKey}' deleted: {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
         }
 
         private static async Task<string> GetAsync<T>(IDistributedCache cache, string key)

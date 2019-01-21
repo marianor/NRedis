@@ -3,7 +3,6 @@ using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +10,9 @@ namespace Framework.Caching.Redis
 {
     public class RedisCache : IDistributedCache
     {
+        private static readonly byte[] ValueField = RespProtocol.Encoding.GetBytes("val");
+        private static readonly byte[] SlidingExpirationField = RespProtocol.Encoding.GetBytes("sld");
+
         private readonly IRespClient _respClient;
 
         public RedisCache(IOptions<RedisCacheOptions> optionsAccessor, IRespClient client = null)
@@ -28,7 +30,7 @@ namespace Framework.Caching.Redis
             if (key.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
 
-            var request = new Request(CommandType.Get, key);
+            var request = new Request(CommandType.HGet, key, ValueField);
             var response = _respClient.Execute(request);
             return response.GetRawValue();
         }
@@ -46,7 +48,7 @@ namespace Framework.Caching.Redis
             if (key.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
 
-            var request = new Request(CommandType.Get, key);
+            var request = new Request(CommandType.HGet, key, ValueField);
             var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
             return response.GetRawValue();
         }
@@ -64,19 +66,32 @@ namespace Framework.Caching.Redis
         /// <returns></returns>
         public Task RefreshAsync(string key, CancellationToken token = default)
         {
+            // TODO use PTTL command to get the life of the Item
             throw new NotImplementedException();
         }
 
         public void Remove(string key)
         {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (key.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+
             var request = new Request(CommandType.Del, key);
             _respClient.Execute(request);
             // TODO validate response
         }
 
-        public Task RemoveAsync(string key, CancellationToken token = default)
+        public async Task RemoveAsync(string key, CancellationToken token = default)
         {
-            throw new NotImplementedException();
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (key.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+
+            var request = new Request(CommandType.Del, key);
+            await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
+            // TODO validate response
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -85,9 +100,21 @@ namespace Framework.Caching.Redis
                 throw new ArgumentNullException(nameof(key));
             if (key.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
 
-            var request = new Request(CommandType.Set, GetSetArgs(key, value, options));
-            var response = _respClient.Execute(request); // TODO validate responses
+            var now = DateTimeOffset.UtcNow;
+            var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
+
+            var request = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            if (options.AbsoluteExpirationRelativeToNow.HasValue)
+                _respClient.Execute(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) });
+            else if (options.AbsoluteExpiration.HasValue)
+                _respClient.Execute(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) });
+            else
+                _respClient.Execute(request);
         }
 
         /// <summary>
@@ -104,26 +131,23 @@ namespace Framework.Caching.Redis
                 throw new ArgumentNullException(nameof(key));
             if (key.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
 
-            var request = new Request(CommandType.Set, GetSetArgs(key, value, options));
-            var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
+            var now = DateTimeOffset.UtcNow;
+            var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
+
+            var request = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            if (options.AbsoluteExpirationRelativeToNow.HasValue)
+                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) }, token).ConfigureAwait(false);
+            else if (options.AbsoluteExpiration.HasValue)
+                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) }, token).ConfigureAwait(false);
+            else
+                await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
             //if (responses.First().ValueType == Protocol.ValueType.)
             // TODO validate responses
-        }
-
-        private static object[] GetSetArgs(string key, byte[] value, DistributedCacheEntryOptions options)
-        {
-            // TODO UTF8Parser
-            if (options.SlidingExpiration.HasValue)
-                return new object[] { key, value, $"PX {options.SlidingExpiration.Value.TotalMilliseconds:0}" };
-
-            if (options.AbsoluteExpiration.HasValue)
-                return new object[] { key, value, $"PX {(options.AbsoluteExpiration.Value - DateTimeOffset.Now).TotalMilliseconds:0}" };
-
-            if (options.AbsoluteExpirationRelativeToNow.HasValue)
-                return new object[] { key, value, $"PX {options.AbsoluteExpirationRelativeToNow.Value.TotalMilliseconds:0}" };
-
-            return new object[] { key, value };
         }
     }
 }

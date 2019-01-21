@@ -8,10 +8,14 @@
         Exists,
         Get,
         GetSet,
+        HGet,
+        HMGet,
+        HMSet,
         MGet,
         MSet,
         PExpire,
         PExpireAt,
+        PTtl,
         Set
     }
 
