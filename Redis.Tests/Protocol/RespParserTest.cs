@@ -26,7 +26,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.SimpleString, response.ValueType);
+            Assert.AreEqual(DataType.SimpleString, response.DataType);
             Assert.AreEqual(string.Empty, response.Value);
         }
 
@@ -39,7 +39,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.SimpleString, response.ValueType);
+            Assert.AreEqual(DataType.SimpleString, response.DataType);
             Assert.AreEqual("foo", response.Value);
         }
 
@@ -72,7 +72,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.Error, response.ValueType);
+            Assert.AreEqual(DataType.Error, response.DataType);
             Assert.AreEqual("foo", response.Value);
         }
 
@@ -105,7 +105,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(IntegerResponse));
-            Assert.AreEqual(ValueType.Integer, response.ValueType);
+            Assert.AreEqual(DataType.Integer, response.DataType);
             Assert.AreEqual(34L, response.Value);
         }
 
@@ -138,7 +138,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.BulkString, response.ValueType);
+            Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual("foo", response.Value);
         }
 
@@ -171,7 +171,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.BulkString, response.ValueType);
+            Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual(string.Empty, response.Value);
         }
 
@@ -184,7 +184,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.BulkString, response.ValueType);
+            Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.IsNull(response.Value);
         }
 
@@ -197,7 +197,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
-            Assert.AreEqual(ValueType.BulkString, response.ValueType);
+            Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual("foo\r\nbar", response.Value);
         }
 
@@ -210,7 +210,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             Assert.AreEqual(0, ((object[])response.Value).Length);
         }
 
@@ -244,7 +244,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             Assert.IsNull(response.Value);
         }
 
@@ -257,7 +257,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
             Assert.AreEqual(1, result.Length);
             Assert.AreEqual(10L, result[0]);
@@ -272,7 +272,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
             Assert.AreEqual(2, result.Length);
             Assert.AreEqual("foo", result[0]);
@@ -288,7 +288,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
             Assert.AreEqual(1, result.Length);
             Assert.AreEqual("foo", result[0]);
@@ -303,7 +303,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
             Assert.AreEqual(5, result.Length);
             Assert.AreEqual(1L, result[0]);
@@ -322,7 +322,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
 
             var result = (object[])response.Value;
             Assert.AreEqual(2, result.Length);
@@ -346,13 +346,13 @@ namespace Framework.Caching.Redis.Protocol.Tests
 
             var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
             Assert.AreEqual(3, result.Length);
             Assert.AreEqual("foo", result[0]);
             Assert.IsNull(result[1]);
             Assert.AreEqual("bar", result[2]);
-            Assert.AreEqual(ValueType.Array, response.ValueType);
+            Assert.AreEqual(DataType.Array, response.DataType);
         }
     }
 }

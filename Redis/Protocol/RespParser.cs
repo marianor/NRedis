@@ -27,13 +27,13 @@ namespace Framework.Caching.Redis.Protocol
             switch (state.Buffer[state.Position++])
             {
                 case SimpleString:
-                    return new StringResponse(ValueType.SimpleString, ParseSimpleString(state));
+                    return new StringResponse(DataType.SimpleString, ParseSimpleString(state));
                 case Error:
-                    return new StringResponse(ValueType.Error, ParseSimpleString(state));
+                    return new StringResponse(DataType.Error, ParseSimpleString(state));
                 case Integer:
                     return new IntegerResponse(ParseInteger(state));
                 case BulkString:
-                    return new StringResponse(ValueType.BulkString, ParseBulkString(state));
+                    return new StringResponse(DataType.BulkString, ParseBulkString(state));
                 case Array:
                     return new ArrayResponse(ParseArray(state));
                 default:

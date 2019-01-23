@@ -4,13 +4,13 @@
     {
         private readonly byte[] _value;
 
-        internal StringResponse(ValueType valueType, byte[] value)
+        internal StringResponse(DataType valueType, byte[] value)
         {
-            ValueType = valueType;
+            DataType = valueType;
             _value = value;
         }
 
-        public ValueType ValueType { get; }
+        public DataType DataType { get; }
 
         public string Value => _value == null ? null : RespProtocol.Encoding.GetString(_value);
 

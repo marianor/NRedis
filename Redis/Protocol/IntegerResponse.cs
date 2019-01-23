@@ -12,7 +12,7 @@ namespace Framework.Caching.Redis.Protocol
 
         object IResponse.Value => Value;
 
-        public ValueType ValueType => ValueType.Integer;
+        public DataType DataType => DataType.Integer;
 
         public byte[] GetRawValue()
         {

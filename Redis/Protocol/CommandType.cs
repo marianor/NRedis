@@ -5,6 +5,7 @@
         Auth,
         DBSize,
         Del,
+        Eval,
         Exists,
         Get,
         GetSet,

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Globalization;
+using System.Buffers.Text;
 
 namespace Framework.Caching.Redis.Protocol
 {
@@ -14,7 +14,7 @@ namespace Framework.Caching.Redis.Protocol
 
         public int Position { get; private set; }
 
-        public void Write(byte[] buffer)
+        public void WriteRaw(byte[] buffer)
         {
             var span = _memory.Slice(Position).Span;
             for (var i = 0; i < buffer.Length; i++)
@@ -25,17 +25,28 @@ namespace Framework.Caching.Redis.Protocol
 
         public void Write(string value)
         {
-            Write(RespProtocol.Encoding.GetBytes(value));
+            WriteRaw(RespProtocol.Encoding.GetBytes(value));
+        }
+
+        public void Write(int value)
+        {
+            var span = _memory.Slice(Position).Span;
+            Utf8Formatter.TryFormat(value, span, out int bytesWritten);
+            Position += bytesWritten;
         }
 
         public void Write(long value)
         {
-            Write(value.ToString(CultureInfo.InvariantCulture));
+            var span = _memory.Slice(Position).Span;
+            Utf8Formatter.TryFormat(value, span, out int bytesWritten);
+            Position += bytesWritten;
         }
 
         public void Write(double value)
         {
-            Write(value.ToString(CultureInfo.InvariantCulture));
+            var span = _memory.Slice(Position).Span;
+            Utf8Formatter.TryFormat(value, span, out int bytesWritten);
+            Position += bytesWritten;
         }
     }
 }

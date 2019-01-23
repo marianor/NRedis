@@ -53,8 +53,8 @@ namespace Framework.Caching.Redis.Tester
             try
             {
                 var caches = provider.GetServices<IDistributedCache>();
-                await DoLocalOperationsAsync(caches.First(), loggerFactory).ConfigureAwait(false);
-                await Console.Out.WriteLineAsync().ConfigureAwait(false);
+                //await DoLocalOperationsAsync(caches.First(), loggerFactory).ConfigureAwait(false);
+                //await Console.Out.WriteLineAsync().ConfigureAwait(false);
                 await DoAzureOperationsAsync(caches.ElementAt(1), loggerFactory).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -88,6 +88,9 @@ namespace Framework.Caching.Redis.Tester
             await Console.Out.WriteLineAsync($"Get for '{DeletedKey}': {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
             await Console.Out.WriteLineAsync($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}").ConfigureAwait(false);
 
+            await cache.RefreshAsync(ItemKey).ConfigureAwait(false);
+            await cache.RefreshAsync(ItemsKey).ConfigureAwait(false);
+
             await cache.RemoveAsync(DeletedKey).ConfigureAwait(false);
             await Console.Out.WriteLineAsync($"Value '{DeletedKey}' deleted: {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
         }
@@ -106,7 +109,7 @@ namespace Framework.Caching.Redis.Tester
         private static async Task SetAsync(IDistributedCache cache, string key, object value)
         {
             var serializedValue = Serializer.Serialize(value);
-            await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
+            await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
         }
 
         private static string GetNugetFolder()

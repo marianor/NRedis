@@ -1,6 +1,6 @@
 ﻿namespace Framework.Caching.Redis.Protocol
 {
-    public enum ValueType
+    public enum DataType
     {
         Array,
         BulkString,

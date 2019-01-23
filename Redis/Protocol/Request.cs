@@ -43,10 +43,10 @@ namespace Framework.Caching.Redis.Protocol
         public int Write(Memory<byte> buffer)
         {
             var writer = new MemoryWriter(buffer);
-            writer.Write(_command);
+            writer.WriteRaw(_command);
             if (_args != null)
                 WritePayload(writer);
-            writer.Write(RespProtocol.CRLF);
+            writer.WriteRaw(RespProtocol.CRLF);
             return writer.Position;
         }
 
@@ -54,9 +54,9 @@ namespace Framework.Caching.Redis.Protocol
         {
             foreach (var arg in _args)
             {
-                writer.Write(RespProtocol.Separator);
+                writer.WriteRaw(RespProtocol.Separator);
                 if (arg is byte[] bytesArg)
-                    writer.Write(bytesArg);
+                    writer.WriteRaw(bytesArg);
                 else if (arg is string stringArg)
                     writer.Write(stringArg);
                 else if (arg is DateTime dateTimeArg)
@@ -65,6 +65,8 @@ namespace Framework.Caching.Redis.Protocol
                     writer.Write(dateTimeOffsetArg.ToUnixTimeMilliseconds());
                 else if (arg is TimeSpan timeSpanArg)
                     writer.Write(timeSpanArg.TotalMilliseconds);
+                else if (arg is int intArg)
+                    writer.Write(intArg);
             }
         }
     }

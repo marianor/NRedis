@@ -4,8 +4,9 @@
     {
         object Value { get; }
 
-        ValueType ValueType { get; }
+        DataType DataType { get; }
 
+        // TODO should it be here !!!!
         byte[] GetRawValue();
     }
 }

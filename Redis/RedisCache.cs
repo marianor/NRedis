@@ -3,6 +3,7 @@ using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace Framework.Caching.Redis
     {
         private static readonly byte[] ValueField = RespProtocol.Encoding.GetBytes("val");
         private static readonly byte[] SlidingExpirationField = RespProtocol.Encoding.GetBytes("sld");
+        private static readonly byte[] RefreshScript = RespProtocol.Encoding.GetBytes("\"local sliding = tonumber(redis.call('HGET',KEYS[1],ARGV[1])) if sliding > 0 then redis.call('PEXPIRE',KEYS[1],sliding) end\"");
 
         private readonly IRespClient _respClient;
 
@@ -55,6 +57,11 @@ namespace Framework.Caching.Redis
 
         public void Refresh(string key)
         {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (key.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+
             throw new NotImplementedException();
         }
 
@@ -64,10 +71,17 @@ namespace Framework.Caching.Redis
         /// <param name="key"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public Task RefreshAsync(string key, CancellationToken token = default)
+        public async Task RefreshAsync(string key, CancellationToken token = default)
         {
-            // TODO use PTTL command to get the life of the Item
-            throw new NotImplementedException();
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+            if (key.Length == 0)
+                throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
+
+            var request = new Request(CommandType.Eval, RefreshScript, 1, key, SlidingExpirationField);
+            var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
+            if (response.DataType == DataType.Error)
+                throw new ProtocolViolationException((string)response.Value);
         }
 
         public void Remove(string key)
@@ -113,6 +127,8 @@ namespace Framework.Caching.Redis
                 _respClient.Execute(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) });
             else if (options.AbsoluteExpiration.HasValue)
                 _respClient.Execute(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) });
+            else if (options.SlidingExpiration.HasValue)
+                _respClient.Execute(new[] { request, new Request(CommandType.PExpire, key, options.SlidingExpiration.Value) });
             else
                 _respClient.Execute(request);
         }
@@ -144,6 +160,8 @@ namespace Framework.Caching.Redis
                 await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) }, token).ConfigureAwait(false);
             else if (options.AbsoluteExpiration.HasValue)
                 await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) }, token).ConfigureAwait(false);
+            else if (options.SlidingExpiration.HasValue)
+                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpire, key, options.SlidingExpiration.Value) }, token).ConfigureAwait(false);
             else
                 await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
             //if (responses.First().ValueType == Protocol.ValueType.)
