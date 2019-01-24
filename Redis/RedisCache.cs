@@ -3,9 +3,12 @@ using Framework.Caching.Redis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Framework.Caching.Redis
 {
@@ -34,6 +37,7 @@ namespace Framework.Caching.Redis
 
             var request = new Request(CommandType.HGet, key, ValueField);
             var response = _respClient.Execute(request);
+            ThrowIfError(response);
             return response.GetRawValue();
         }
 
@@ -52,6 +56,7 @@ namespace Framework.Caching.Redis
 
             var request = new Request(CommandType.HGet, key, ValueField);
             var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
+            ThrowIfError(response);
             return response.GetRawValue();
         }
 
@@ -62,7 +67,9 @@ namespace Framework.Caching.Redis
             if (key.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
 
-            throw new NotImplementedException();
+            var request = new Request(CommandType.Eval, RefreshScript, 1, key, SlidingExpirationField);
+            var response = _respClient.Execute(request);
+            ThrowIfError(response);
         }
 
         /// <summary>
@@ -80,8 +87,7 @@ namespace Framework.Caching.Redis
 
             var request = new Request(CommandType.Eval, RefreshScript, 1, key, SlidingExpirationField);
             var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
-            if (response.DataType == DataType.Error)
-                throw new ProtocolViolationException((string)response.Value);
+            ThrowIfError(response);
         }
 
         public void Remove(string key)
@@ -92,8 +98,8 @@ namespace Framework.Caching.Redis
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
 
             var request = new Request(CommandType.Del, key);
-            _respClient.Execute(request);
-            // TODO validate response
+            var response = _respClient.Execute(request);
+            ThrowIfError(response);
         }
 
         public async Task RemoveAsync(string key, CancellationToken token = default)
@@ -104,8 +110,8 @@ namespace Framework.Caching.Redis
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(key));
 
             var request = new Request(CommandType.Del, key);
-            await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
-            // TODO validate response
+            var response = await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
+            ThrowIfError(response);
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -122,15 +128,18 @@ namespace Framework.Caching.Redis
             var now = DateTimeOffset.UtcNow;
             var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
 
-            var request = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
-            if (options.AbsoluteExpirationRelativeToNow.HasValue)
-                _respClient.Execute(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) });
-            else if (options.AbsoluteExpiration.HasValue)
-                _respClient.Execute(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) });
-            else if (options.SlidingExpiration.HasValue)
-                _respClient.Execute(new[] { request, new Request(CommandType.PExpire, key, options.SlidingExpiration.Value) });
+            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            var expirationRequest = GetExpirationRequest(key, options);
+            if (expirationRequest == null)
+            {
+                var response = _respClient.Execute(setRequest);
+                ThrowIfError(response);
+            }
             else
-                _respClient.Execute(request);
+            {
+                var responses = _respClient.Execute(new[] { setRequest, expirationRequest });
+                ThrowIfError(responses, 2);
+            }
         }
 
         /// <summary>
@@ -155,17 +164,53 @@ namespace Framework.Caching.Redis
             var now = DateTimeOffset.UtcNow;
             var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
 
-            var request = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
-            if (options.AbsoluteExpirationRelativeToNow.HasValue)
-                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value) }, token).ConfigureAwait(false);
-            else if (options.AbsoluteExpiration.HasValue)
-                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value) }, token).ConfigureAwait(false);
-            else if (options.SlidingExpiration.HasValue)
-                await _respClient.ExecuteAsync(new[] { request, new Request(CommandType.PExpire, key, options.SlidingExpiration.Value) }, token).ConfigureAwait(false);
+            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            var expirationRequest = GetExpirationRequest(key, options);
+            if (expirationRequest == null)
+            {
+                var response = await _respClient.ExecuteAsync(setRequest, token).ConfigureAwait(false);
+                ThrowIfError(response);
+            }
             else
-                await _respClient.ExecuteAsync(request, token).ConfigureAwait(false);
-            //if (responses.First().ValueType == Protocol.ValueType.)
-            // TODO validate responses
+            {
+                var responses = await _respClient.ExecuteAsync(new[] { setRequest, expirationRequest }, token).ConfigureAwait(false);
+                ThrowIfError(responses, 2);
+            }
+        }
+
+        private IRequest GetExpirationRequest(string key, DistributedCacheEntryOptions options)
+        {
+            if (options.AbsoluteExpirationRelativeToNow.HasValue)
+                return new Request(CommandType.PExpire, key, options.AbsoluteExpirationRelativeToNow.Value);
+
+            if (options.AbsoluteExpiration.HasValue)
+                return new Request(CommandType.PExpireAt, key, options.AbsoluteExpiration.Value);
+
+            if (options.SlidingExpiration.HasValue)
+                return new Request(CommandType.PExpire, key, options.SlidingExpiration.Value);
+
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ThrowIfError(IEnumerable<IResponse> responses, int count)
+        {
+            foreach (var response in responses)
+            {
+                ThrowIfError(response);
+                count--;
+            }
+
+            // TODO create a resource string
+            if (count != 0)
+                throw new InvalidOperationException("Responses not match with request");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ThrowIfError(IResponse response)
+        {
+            if (response.DataType == DataType.Error)
+                throw new ProtocolViolationException((string)response.Value);
         }
     }
 }

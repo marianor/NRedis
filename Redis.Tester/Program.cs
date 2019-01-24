@@ -55,7 +55,7 @@ namespace Framework.Caching.Redis.Tester
                 var caches = provider.GetServices<IDistributedCache>();
                 //await DoLocalOperationsAsync(caches.First(), loggerFactory).ConfigureAwait(false);
                 //await Console.Out.WriteLineAsync().ConfigureAwait(false);
-                await DoAzureOperationsAsync(caches.ElementAt(1), loggerFactory).ConfigureAwait(false);
+                await DoOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -66,18 +66,14 @@ namespace Framework.Caching.Redis.Tester
                 Console.ReadKey();
             }
         }
-        private static async Task DoAzureOperationsAsync(IDistributedCache cache, ILoggerFactory loggerFactory)
-        {
-            await DoOperationsAsync(cache, loggerFactory).ConfigureAwait(false);
-        }
 
-        private static async Task DoLocalOperationsAsync(IDistributedCache cache, ILoggerFactory loggerFactory)
+        private static async Task DoLocalOperationsAsync(IDistributedCache cache)
         {
             using (var redisServer = new LocalRedisLauncher(Path.Combine(GetNugetFolder(), @"redis-64\3.0.503\tools")))
-                await DoOperationsAsync(cache, loggerFactory).ConfigureAwait(false);
+                await DoOperationsAsync(cache).ConfigureAwait(false);
         }
 
-        private static async Task DoOperationsAsync(IDistributedCache cache, ILoggerFactory loggerFactory)
+        private static async Task DoOperationsAsync(IDistributedCache cache)
         {
             await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
             await SetAsync(cache, ItemsKey, GetDataArray(10)).ConfigureAwait(false);
