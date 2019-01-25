@@ -30,7 +30,7 @@ namespace Framework.Caching.Redis.Protocol
 
         public void Write(string value)
         {
-            WriteRaw(RespProtocol.Encoding.GetBytes(value));
+            WriteRaw(Resp.Encoding.GetBytes(value));
         }
 
         public void Write(long value)

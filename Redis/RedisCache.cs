@@ -14,9 +14,9 @@ namespace Framework.Caching.Redis
 {
     public class RedisCache : IDistributedCache
     {
-        private static readonly byte[] ValueField = RespProtocol.Encoding.GetBytes("val");
-        private static readonly byte[] SlidingExpirationField = RespProtocol.Encoding.GetBytes("sld");
-        private static readonly byte[] RefreshScript = RespProtocol.Encoding.GetBytes("\"local sliding = tonumber(redis.call('HGET',KEYS[1],ARGV[1])) if sliding > 0 then redis.call('PEXPIRE',KEYS[1],sliding) end\"");
+        private static readonly byte[] ValueField = Resp.Encoding.GetBytes("val");
+        private static readonly byte[] SlidingExpirationField = Resp.Encoding.GetBytes("sld");
+        private static readonly byte[] RefreshScript = Resp.Encoding.GetBytes("\"local sliding = tonumber(redis.call('HGET',KEYS[1],ARGV[1])) if sliding > 0 then redis.call('PEXPIRE',KEYS[1],sliding) end\"");
 
         private readonly IRespClient _respClient;
 
@@ -125,10 +125,7 @@ namespace Framework.Caching.Redis
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            var now = DateTimeOffset.UtcNow;
-            var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
-
-            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, options.SlidingExpiration.GetValueOrDefault());
             var expirationRequest = GetExpirationRequest(key, options);
             if (expirationRequest == null)
             {
@@ -138,7 +135,7 @@ namespace Framework.Caching.Redis
             else
             {
                 var responses = _respClient.Execute(new[] { setRequest, expirationRequest });
-                ThrowIfError(responses, 2);
+                ThrowIfError(responses);
             }
         }
 
@@ -161,10 +158,7 @@ namespace Framework.Caching.Redis
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            var now = DateTimeOffset.UtcNow;
-            var slidingExpiration = options.SlidingExpiration.GetValueOrDefault();
-
-            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, slidingExpiration);
+            var setRequest = new Request(CommandType.HMSet, key, ValueField, value, SlidingExpirationField, options.SlidingExpiration.GetValueOrDefault());
             var expirationRequest = GetExpirationRequest(key, options);
             if (expirationRequest == null)
             {
@@ -174,7 +168,7 @@ namespace Framework.Caching.Redis
             else
             {
                 var responses = await _respClient.ExecuteAsync(new[] { setRequest, expirationRequest }, token).ConfigureAwait(false);
-                ThrowIfError(responses, 2);
+                ThrowIfError(responses);
             }
         }
 
@@ -193,17 +187,10 @@ namespace Framework.Caching.Redis
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ThrowIfError(IEnumerable<IResponse> responses, int count)
+        private void ThrowIfError(IEnumerable<IResponse> responses)
         {
             foreach (var response in responses)
-            {
                 ThrowIfError(response);
-                count--;
-            }
-
-            // TODO create a resource string
-            if (count != 0)
-                throw new InvalidOperationException("Responses not match with request");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

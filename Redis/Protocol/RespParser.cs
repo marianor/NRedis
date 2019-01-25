@@ -15,11 +15,17 @@ namespace Framework.Caching.Redis.Protocol
         private const byte Array = (byte)'*';
 
         // TODO Consider Memory<byte>
-        public IEnumerable<IResponse> Parse(byte[] buffer)
+        public IEnumerable<IResponse> Parse(byte[] buffer, int count)
         {
             var bufferState = new BufferState { Buffer = buffer, Position = 0 };
             while (buffer.Length > bufferState.Position)
+            {
+                count--;
                 yield return ParseElement(bufferState);
+            }
+
+            if (count != 0)
+                throw new ProtocolViolationException("Invalid responses"); // TODO check messages
         }
 
         private static IResponse ParseElement(BufferState state)
@@ -44,7 +50,7 @@ namespace Framework.Caching.Redis.Protocol
         private static byte[] ParseSimpleString(BufferState state)
         {
             var buffer = state.Buffer.AsSpan(state.Position);
-            var length = buffer.IndexOf(RespProtocol.CRLF);
+            var length = buffer.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
@@ -55,7 +61,7 @@ namespace Framework.Caching.Redis.Protocol
         private static byte[] ParseInteger(BufferState state)
         {
             var buffer = state.Buffer.AsSpan(state.Position);
-            var length = buffer.IndexOf(RespProtocol.CRLF);
+            var length = buffer.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
@@ -66,7 +72,7 @@ namespace Framework.Caching.Redis.Protocol
         private static byte[] ParseBulkString(BufferState state)
         {
             var lengthBuffer = ParseInteger(state);
-            if (!Utf8Parser.TryParse(lengthBuffer, out int length, out int bytesConsumed))
+            if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
                 throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(state.Position));
 
             if (length == -1)
@@ -75,7 +81,7 @@ namespace Framework.Caching.Redis.Protocol
             var value = state.Buffer.AsSpan().Slice(state.Position, length).ToArray();
             state.Position += length;
             // TODO compare Spans ???
-            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != RespProtocol.CRLF[0] || state.Buffer[state.Position + 1] != RespProtocol.CRLF[1])
+            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != Resp.CRLF[0] || state.Buffer[state.Position + 1] != Resp.CRLF[1])
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
             state.Position += 2;
@@ -85,7 +91,7 @@ namespace Framework.Caching.Redis.Protocol
         private static object[] ParseArray(BufferState state)
         {
             var lengthBuffer = ParseInteger(state);
-            if (!Utf8Parser.TryParse(lengthBuffer, out int length, out int bytesConsumed))
+            if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
                 throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(state.Position));
 
             if (length == -1)

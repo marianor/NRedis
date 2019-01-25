@@ -2,7 +2,7 @@
 
 namespace Framework.Caching.Redis.Protocol
 {
-    internal class RespProtocol
+    internal class Resp
     {
         public static readonly Encoding Encoding = Encoding.UTF8;
 

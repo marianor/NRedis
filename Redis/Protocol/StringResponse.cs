@@ -12,7 +12,7 @@
 
         public DataType DataType { get; }
 
-        public string Value => _value == null ? null : RespProtocol.Encoding.GetString(_value);
+        public string Value => _value == null ? null : Resp.Encoding.GetString(_value);
 
         object IResponse.Value => Value;
 

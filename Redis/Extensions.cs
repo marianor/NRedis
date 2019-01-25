@@ -23,7 +23,7 @@ namespace Framework.Caching.Redis
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToLogText(this byte[] buffer)
         {
-            return RespProtocol.Encoding.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
+            return Resp.Encoding.GetString(buffer).Replace("\r", "\\r").Replace("\n", "\\n");
         }
     }
 }

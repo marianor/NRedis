@@ -59,9 +59,9 @@ namespace Framework.Caching.Redis.Protocol
 
             Connect();
             // TODO check
-            var requestsBuffer = GetBuffer(request);
-            var responseText = _transport.Send(requestsBuffer);
-            return new RespParser().Parse(responseText).Single();
+            var requestBuffer = GetBuffer(request);
+            var responseBuffer = _transport.Send(requestBuffer);
+            return new RespParser().Parse(responseBuffer, 1).First();
         }
 
         public IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests)
@@ -73,9 +73,9 @@ namespace Framework.Caching.Redis.Protocol
 
             Connect();
             // TODO check
-            var requestsBuffer = GetBuffer(requests);
-            var responseText = _transport.Send(requestsBuffer);
-            return new RespParser().Parse(responseText);
+            var (requestBuffer, count) = GetBuffer(requests);
+            var responsesBuffer = _transport.Send(requestBuffer);
+            return new RespParser().Parse(responsesBuffer, count);
         }
 
         public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default)
@@ -87,7 +87,7 @@ namespace Framework.Caching.Redis.Protocol
             // TODO make better
             var requestsBuffer = GetBuffer(request);
             var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
-            return new RespParser().Parse(responseText).Single();
+            return new RespParser().Parse(responseText, 1).First();
         }
 
         public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default)
@@ -99,9 +99,9 @@ namespace Framework.Caching.Redis.Protocol
 
             await ConnectAsync(token).ConfigureAwait(false);
             // TODO make better
-            var requestsBuffer = GetBuffer(requests);
-            var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
-            return new RespParser().Parse(responseText);
+            var (requestBuffer, count) = GetBuffer(requests);
+            var responseBuffer = await _transport.SendAsync(requestBuffer, token).ConfigureAwait(false);
+            return new RespParser().Parse(responseBuffer, count);
         }
 
         // TODO maybe extension method
@@ -114,20 +114,24 @@ namespace Framework.Caching.Redis.Protocol
         }
 
         // TODO maybe extension method
-        private static byte[] GetBuffer(IEnumerable<IRequest> requests)
+        private static (byte[] request, int count) GetBuffer(IEnumerable<IRequest> requests)
         {
             // TODO use pool ?
+            var count = 0;
             Memory<byte> memory = new byte[4096];
             var length = 0;
             foreach (var request in requests)
+            {
                 length += request.Write(memory.Slice(length));
+                count++;
+            }
 
-            return memory.Slice(0, length).ToArray();
+            return (memory.Slice(0, length).ToArray(), count);
         }
 
         private static void VerifyConnection(IResponse response)
         {
-            if (!Equals(response.Value, RespProtocol.Success))
+            if (!Equals(response.Value, Resp.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }

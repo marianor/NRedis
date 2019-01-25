@@ -23,7 +23,7 @@ namespace Framework.Caching.Redis.Protocol
             if (command.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(command));
 
-            _command = RespProtocol.Encoding.GetBytes(command);
+            _command = Resp.Encoding.GetBytes(command);
             _args = args;
         }
 
@@ -31,7 +31,7 @@ namespace Framework.Caching.Redis.Protocol
         {
         }
 
-        public string Command => RespProtocol.Encoding.GetString(_command);
+        public string Command => Resp.Encoding.GetString(_command);
 
         public T GetArg<T>(int index)
         {
@@ -46,7 +46,7 @@ namespace Framework.Caching.Redis.Protocol
             writer.WriteRaw(_command);
             if (_args != null)
                 WritePayload(writer);
-            writer.WriteRaw(RespProtocol.CRLF);
+            writer.WriteRaw(Resp.CRLF);
             return writer.Position;
         }
 
@@ -54,7 +54,7 @@ namespace Framework.Caching.Redis.Protocol
         {
             foreach (var arg in _args)
             {
-                writer.WriteRaw(RespProtocol.Separator);
+                writer.WriteRaw(Resp.Separator);
                 if (arg is byte[] bytesArg)
                     writer.WriteRaw(bytesArg);
                 else if (arg is string stringArg)

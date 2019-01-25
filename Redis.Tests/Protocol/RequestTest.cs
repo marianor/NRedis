@@ -32,7 +32,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(memory.ToArray()));
+            Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
 
         [TestMethod]
@@ -45,7 +45,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(memory.ToArray()));
+            Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
 
         [TestMethod]
@@ -58,7 +58,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(memory.ToArray()));
+            Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
 
         [TestMethod]
@@ -71,7 +71,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(memory.ToArray()));
+            Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
 
         [TestMethod]
@@ -84,7 +84,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var length = target.Write(memory);
 
             Assert.AreEqual(expected.Length, length);
-            Assert.AreEqual(expected, RespProtocol.Encoding.GetString(memory.ToArray()));
+            Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
     }
 }
