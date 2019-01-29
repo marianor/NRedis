@@ -16,8 +16,6 @@ namespace Framework.Caching.Redis.Protocol
     {
         private readonly RedisCacheOptions _optionsAccessor;
         private readonly ITransport _transport;
-        // TODO should I use a Pool here ?
-        //private static readonly ArrayPool<byte> _pool = ArrayPool<byte>.Create();
 
         public RespClient(IOptions<RedisCacheOptions> optionsAccessor, ITransport transport = null)
         {
@@ -34,7 +32,7 @@ namespace Framework.Caching.Redis.Protocol
                 if (_optionsAccessor.Password != null)
                 {
                     var response = Execute(new Request(CommandType.Auth, _optionsAccessor.Password));
-                    VerifyConnection(response);
+                    VerifyAuthentication(response);
                 }
             }
         }
@@ -47,7 +45,7 @@ namespace Framework.Caching.Redis.Protocol
                 if (_optionsAccessor.Password != null)
                 {
                     var response = await ExecuteAsync(new Request(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
-                    VerifyConnection(response);
+                    VerifyAuthentication(response);
                 }
             }
         }
@@ -58,10 +56,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             Connect();
-            // TODO check
-            var requestBuffer = GetBuffer(request);
-            var responseBuffer = _transport.Send(requestBuffer);
-            return new RespParser().Parse(responseBuffer, 1).First();
+            using (var poolManager = new PoolManager<byte>(request.Length))
+            {
+                var input = poolManager.Buffer;
+                new RespFormatter().Format(request, input);
+                var output = _transport.Send(input);
+                return new RespParser().Parse(output, 1).First();
+            }
         }
 
         public IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests)
@@ -72,10 +73,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
-            // TODO check
-            var (requestBuffer, count) = GetBuffer(requests);
-            var responsesBuffer = _transport.Send(requestBuffer);
-            return new RespParser().Parse(responsesBuffer, count);
+            using (var poolManager = new PoolManager<byte>(requests.Sum(r => r.Length)))
+            {
+                var input = poolManager.Buffer;
+                var count = new RespFormatter().Format(requests, input);
+                var output = _transport.Send(input);
+                return new RespParser().Parse(output, count);
+            }
         }
 
         public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default)
@@ -84,10 +88,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             await ConnectAsync(token).ConfigureAwait(false);
-            // TODO make better
-            var requestsBuffer = GetBuffer(request);
-            var responseText = await _transport.SendAsync(requestsBuffer, token).ConfigureAwait(false);
-            return new RespParser().Parse(responseText, 1).First();
+            using (var poolManager = new PoolManager<byte>(request.Length))
+            {
+                var input = poolManager.Buffer;
+                new RespFormatter().Format(request, input);
+                var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
+                return new RespParser().Parse(output, 1).First();
+            }
         }
 
         public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default)
@@ -98,38 +105,16 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);
-            // TODO make better
-            var (requestBuffer, count) = GetBuffer(requests);
-            var responseBuffer = await _transport.SendAsync(requestBuffer, token).ConfigureAwait(false);
-            return new RespParser().Parse(responseBuffer, count);
-        }
-
-        // TODO maybe extension method
-        private static byte[] GetBuffer(IRequest request)
-        {
-            // TODO use pool ?
-            Memory<byte> memory = new byte[4096];
-            var length = request.Write(memory);
-            return memory.Slice(0, length).ToArray();
-        }
-
-        // TODO maybe extension method
-        private static (byte[] request, int count) GetBuffer(IEnumerable<IRequest> requests)
-        {
-            // TODO use pool ?
-            var count = 0;
-            Memory<byte> memory = new byte[4096];
-            var length = 0;
-            foreach (var request in requests)
+            using (var poolManager = new PoolManager<byte>(requests.Sum(r => r.Length)))
             {
-                length += request.Write(memory.Slice(length));
-                count++;
+                var input = poolManager.Buffer;
+                var count = new RespFormatter().Format(requests, input);
+                var responseBuffer = await _transport.SendAsync(input, token).ConfigureAwait(false);
+                return new RespParser().Parse(responseBuffer, count);
             }
-
-            return (memory.Slice(0, length).ToArray(), count);
         }
 
-        private static void VerifyConnection(IResponse response)
+        private static void VerifyAuthentication(IResponse response)
         {
             if (!Equals(response.Value, Resp.Success))
                 throw new AuthenticationException(""); // TODO make a clear message about exception

@@ -354,5 +354,14 @@ namespace Framework.Caching.Redis.Protocol.Tests
             Assert.AreEqual("bar", result[2]);
             Assert.AreEqual(DataType.Array, response.DataType);
         }
+
+        [TestMethod]
+        public void Parse_IncorrectNumberOfResponses_Throw()
+        {
+            var target = new RespParser();
+
+            var buffer = Resp.Encoding.GetBytes(":100\r\n");
+            Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 2).ToArray());
+        }
     }
 }

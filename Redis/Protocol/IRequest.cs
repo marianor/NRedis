@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Framework.Caching.Redis.Protocol
 {
@@ -8,10 +6,13 @@ namespace Framework.Caching.Redis.Protocol
     {
         string Command { get; }
 
+        int Length { get; }
+
         object[] GetArgs();
 
         T GetArg<T>(int index);
 
+        // TODO remove from here, put this logic in RespFormatter
         int Write(Memory<byte> buffer);
     }
 }

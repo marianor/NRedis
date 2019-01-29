@@ -39,12 +39,5 @@ namespace Framework.Caching.Redis.Protocol
             Utf8Formatter.TryFormat(value, span, out int bytesWritten);
             Position += bytesWritten;
         }
-
-        public void Write(double value)
-        {
-            var span = _memory.Slice(Position).Span;
-            Utf8Formatter.TryFormat(value, span, out int bytesWritten);
-            Position += bytesWritten;
-        }
     }
 }

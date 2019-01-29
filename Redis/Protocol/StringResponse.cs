@@ -16,9 +16,6 @@
 
         object IResponse.Value => Value;
 
-        public byte[] GetRawValue()
-        {
-            return _value;
-        }
+        public byte[] GetRawValue() => _value;
     }
 }

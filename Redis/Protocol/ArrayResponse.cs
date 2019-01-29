@@ -12,9 +12,6 @@ namespace Framework.Caching.Redis.Protocol
 
         public DataType DataType => DataType.Array;
 
-        public byte[] GetRawValue()
-        {
-            throw new System.NotImplementedException();
-        }
+        public byte[] GetRawValue() => throw new System.NotImplementedException();
     }
 }

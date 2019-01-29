@@ -31,6 +31,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var target = new Request(CommandType.DBSize);
             var length = target.Write(memory);
 
+            Assert.AreEqual(expected.Length, target.Length);
             Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
@@ -44,6 +45,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var target = new Request(CommandType.Get, "foo");
             var length = target.Write(memory);
 
+            Assert.AreEqual(expected.Length, target.Length);
             Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
@@ -57,6 +59,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var target = new Request(CommandType.GetSet, "foo", "bar");
             var length = target.Write(memory);
 
+            Assert.AreEqual(expected.Length, target.Length);
             Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
@@ -70,6 +73,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var target = new Request(CommandType.PExpireAt, "foo", new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero));
             var length = target.Write(memory);
 
+            Assert.AreEqual(expected.Length, target.Length);
             Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }
@@ -83,6 +87,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var target = new Request(CommandType.PExpire, "foo", TimeSpan.FromHours(5));
             var length = target.Write(memory);
 
+            Assert.AreEqual(expected.Length, target.Length);
             Assert.AreEqual(expected.Length, length);
             Assert.AreEqual(expected, Resp.Encoding.GetString(memory.ToArray()));
         }

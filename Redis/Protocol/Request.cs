@@ -1,5 +1,6 @@
 ﻿using Framework.Caching.Redis.Properties;
 using System;
+using System.Numerics;
 
 namespace Framework.Caching.Redis.Protocol
 {
@@ -24,7 +25,7 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(command));
 
             _command = Resp.Encoding.GetBytes(command);
-            _args = args;
+            _args = args ?? Array.Empty<object>();
         }
 
         public Request(CommandType commandType, params object[] args) : this(commandType.ToCommand(), args)
@@ -32,6 +33,32 @@ namespace Framework.Caching.Redis.Protocol
         }
 
         public string Command => Resp.Encoding.GetString(_command);
+
+        public int Length
+        {
+            get
+            {
+                var length = Command.Length + Resp.CRLF.Length;
+                foreach (var arg in _args)
+                {
+                    length++;
+                    if (arg is byte[] bytesArg)
+                        length += bytesArg.Length;
+                    else if (arg is string stringArg)
+                        length += stringArg.Length;
+                    else if (arg is DateTime dateTimeArg)
+                        length += CountDigits(((DateTimeOffset)dateTimeArg).ToUnixTimeMilliseconds());
+                    else if (arg is DateTimeOffset dateTimeOffsetArg)
+                        length += CountDigits(dateTimeOffsetArg.ToUnixTimeMilliseconds());
+                    else if (arg is TimeSpan timeSpanArg)
+                        length += CountDigits((long)timeSpanArg.TotalMilliseconds);
+                    else if (arg is int intArg)
+                        length += CountDigits(intArg);
+                }
+
+                return length;
+            }
+        }
 
         public T GetArg<T>(int index)
         {
@@ -44,8 +71,7 @@ namespace Framework.Caching.Redis.Protocol
         {
             var writer = new MemoryWriter(buffer);
             writer.WriteRaw(_command);
-            if (_args != null)
-                WritePayload(writer);
+            WritePayload(writer);
             writer.WriteRaw(Resp.CRLF);
             return writer.Position;
         }
@@ -64,10 +90,22 @@ namespace Framework.Caching.Redis.Protocol
                 else if (arg is DateTimeOffset dateTimeOffsetArg)
                     writer.Write(dateTimeOffsetArg.ToUnixTimeMilliseconds());
                 else if (arg is TimeSpan timeSpanArg)
-                    writer.Write(timeSpanArg.TotalMilliseconds);
+                    writer.Write((long)timeSpanArg.TotalMilliseconds);
                 else if (arg is int intArg)
                     writer.Write(intArg);
             }
+        }
+
+        private static int CountDigits(BigInteger value)
+        {
+            var count = value > 0 ? 0 : 1;
+            while (value != 0)
+            {
+                count++;
+                value /= 10;
+            }
+
+            return count;
         }
     }
 }
