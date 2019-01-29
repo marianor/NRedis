@@ -14,8 +14,8 @@ namespace Framework.Caching.Redis.Transport
 
         Task ConnectAsync(CancellationToken token);
 
-        byte[] Send(byte[] request);
+        byte[] Send(byte[] request, int offset, int length);
 
-        Task<byte[]> SendAsync(byte[] request, CancellationToken token);
+        Task<byte[]> SendAsync(byte[] request, int offset, int length, CancellationToken token);
     }
 }

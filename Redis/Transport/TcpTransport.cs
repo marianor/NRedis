@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Buffers;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -11,8 +10,7 @@ namespace Framework.Caching.Redis.Transport
 {
     public class TcpTransport : ITransport, IDisposable
     {
-        private const int DefaultCapacity = 4096;
-        private static readonly ArrayPool<byte> _bufferPool = ArrayPool<byte>.Shared;
+        private const int DefaultCapacity = 512;
 
         private TcpClient _client;
         private Stream _stream;
@@ -54,26 +52,26 @@ namespace Framework.Caching.Redis.Transport
 
         protected virtual async Task<Stream> GetStreamAsync(TcpClient client) => await Task.FromResult(client.GetStream()).ConfigureAwait(false);
 
-        public byte[] Send(byte[] request)
+        public byte[] Send(byte[] request, int offset, int count)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            _stream.Write(request, 0, request.Length);
+            _stream.Write(request, offset, count);
 
             var response = ReadResponse();
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
         }
 
-        public async Task<byte[]> SendAsync(byte[] request, CancellationToken token = default)
+        public async Task<byte[]> SendAsync(byte[] request, int offset, int count, CancellationToken token = default)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            await _stream.WriteAsync(request, 0, request.Length).ConfigureAwait(false);
+            await _stream.WriteAsync(request, offset, count).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
@@ -84,17 +82,17 @@ namespace Framework.Caching.Redis.Transport
         {
             // TODO change by PipeReader
             using (var output = new MemoryStream(DefaultCapacity))
+            using (var poolManager = new PoolManager<byte>(DefaultCapacity))
             {
-                var buffer = _bufferPool.Rent(DefaultCapacity);
+                var buffer = poolManager.Buffer;
                 var bytes = _stream.Read(buffer, 0, buffer.Length);
-                output.WriteAsync(buffer, 0, bytes);
-                while (_client.Available != 0)
+                output.Write(buffer, 0, bytes);
+                while (bytes == buffer.Length)
                 {
                     bytes = _stream.Read(buffer, 0, buffer.Length);
-                    output.WriteAsync(buffer, 0, bytes);
+                    output.Write(buffer, 0, bytes);
                 }
 
-                _bufferPool.Return(buffer);
                 return output.ToArray();
             }
         }
@@ -102,18 +100,18 @@ namespace Framework.Caching.Redis.Transport
         private async Task<byte[]> ReadResponseAsync(CancellationToken token)
         {
             // TODO change by PipeReader??
-            using (var output = new MemoryStream(DefaultCapacity))
+            using (var output = new MemoryStream())
+            using (var poolManager = new PoolManager<byte>(DefaultCapacity))
             {
-                var buffer = _bufferPool.Rent(DefaultCapacity);
+                var buffer = poolManager.Buffer;
                 var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
                 await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
-                while (_client.Available != 0)
+                while (bytes == buffer.Length)
                 {
                     bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
                     await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
                 }
 
-                _bufferPool.Return(buffer);
                 return output.ToArray();
             }
         }

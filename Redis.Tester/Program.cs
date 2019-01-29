@@ -53,8 +53,8 @@ namespace Framework.Caching.Redis.Tester
             try
             {
                 var caches = provider.GetServices<IDistributedCache>();
-                //await DoLocalOperationsAsync(caches.First(), loggerFactory).ConfigureAwait(false);
-                //await Console.Out.WriteLineAsync().ConfigureAwait(false);
+                await DoLocalOperationsAsync(caches.First()).ConfigureAwait(false);
+                await Console.Out.WriteLineAsync().ConfigureAwait(false);
                 await DoOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -76,7 +76,7 @@ namespace Framework.Caching.Redis.Tester
         private static async Task DoOperationsAsync(IDistributedCache cache)
         {
             await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
-            await SetAsync(cache, ItemsKey, GetDataArray(10)).ConfigureAwait(false);
+            await SetAsync(cache, ItemsKey, GetDataArray(30)).ConfigureAwait(false);
             await SetAsync(cache, DeletedKey, GetData()).ConfigureAwait(false);
 
             await Console.Out.WriteLineAsync($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);

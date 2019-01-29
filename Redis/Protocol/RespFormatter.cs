@@ -17,9 +17,10 @@ namespace Framework.Caching.Redis.Protocol
             // TODO replace by PIPE.IO ?
             var count = 0;
             Memory<byte> memory = buffer;
+            var position = 0;
             foreach (var request in requests)
             {
-                request.Write(memory);
+                position += request.Write(memory.Slice(position));
                 count++;
             }
 

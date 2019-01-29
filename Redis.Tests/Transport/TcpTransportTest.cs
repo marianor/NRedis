@@ -35,7 +35,7 @@ namespace Framework.Caching.Redis.Transport.Tests
         public void Send_RequestIsNull_Throws()
         {
             var target = new TcpTransport("foo", 0);
-            var e = Assert.ThrowsException<ArgumentNullException>(() => target.Send(null));
+            var e = Assert.ThrowsException<ArgumentNullException>(() => target.Send(null, 0, 1));
 
             Assert.AreEqual("request", e.ParamName);
         }
@@ -44,7 +44,7 @@ namespace Framework.Caching.Redis.Transport.Tests
         public async Task SendAsync_RequestIsNull_Throws()
         {
             var target = new TcpTransport("foo", 0);
-            var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.SendAsync(null));
+            var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.SendAsync(null, 0, 1));
 
             Assert.AreEqual("request", e.ParamName);
         }

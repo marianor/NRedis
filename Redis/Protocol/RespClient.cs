@@ -56,11 +56,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             Connect();
-            using (var poolManager = new PoolManager<byte>(request.Length))
+
+            var length = request.Length;
+            using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
                 new RespFormatter().Format(request, input);
-                var output = _transport.Send(input);
+                var output = _transport.Send(input, 0, length);
                 return new RespParser().Parse(output, 1).First();
             }
         }
@@ -73,11 +75,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
-            using (var poolManager = new PoolManager<byte>(requests.Sum(r => r.Length)))
+
+            var length = requests.Sum(r => r.Length);
+            using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
                 var count = new RespFormatter().Format(requests, input);
-                var output = _transport.Send(input);
+                var output = _transport.Send(input, 0, length);
                 return new RespParser().Parse(output, count);
             }
         }
@@ -88,11 +92,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             await ConnectAsync(token).ConfigureAwait(false);
-            using (var poolManager = new PoolManager<byte>(request.Length))
+
+            var length = request.Length;
+            using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
                 new RespFormatter().Format(request, input);
-                var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
+                var output = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
                 return new RespParser().Parse(output, 1).First();
             }
         }
@@ -105,11 +111,13 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);
-            using (var poolManager = new PoolManager<byte>(requests.Sum(r => r.Length)))
+
+            var length = requests.Sum(r => r.Length);
+            using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
                 var count = new RespFormatter().Format(requests, input);
-                var responseBuffer = await _transport.SendAsync(input, token).ConfigureAwait(false);
+                var responseBuffer = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
                 return new RespParser().Parse(responseBuffer, count);
             }
         }
