@@ -11,9 +11,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_InvalidStart_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("|3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'0'");
         }
 
@@ -21,10 +20,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_EmptySimpleString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("+\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.SimpleString, response.DataType);
             Assert.AreEqual(string.Empty, response.Value);
@@ -34,10 +31,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_SimpleString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("+foo\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.SimpleString, response.DataType);
             Assert.AreEqual("foo", response.Value);
@@ -47,9 +42,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_SimpleStringWithInvalidEnd_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("+foo");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -57,9 +51,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_SimpleStringWithInvalidEndSequence_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("+foo\r ");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -67,10 +60,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_Error_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("-foo\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.Error, response.DataType);
             Assert.AreEqual("foo", response.Value);
@@ -80,9 +71,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_ErrorWithInvalidEnd_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("-foo");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -90,9 +80,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_ErrorWithInvalidEndSequence_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("-foo\r ");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -100,10 +89,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_Integer_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes(":34\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(IntegerResponse));
             Assert.AreEqual(DataType.Integer, response.DataType);
             Assert.AreEqual(34L, response.Value);
@@ -113,9 +100,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_IntegerWithInvalidEnd_Throws()
         {
             var buffer = Resp.Encoding.GetBytes(":34");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -123,9 +109,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_IntegerWithInvalidEndSequence_Throws()
         {
             var buffer = Resp.Encoding.GetBytes(":34\r ");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -133,10 +118,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_BulkString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("$3\r\nfoo\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual("foo", response.Value);
@@ -146,9 +129,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_BulkStringWithInvalidEnd_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("$3\r\nfoo");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'7'");
         }
 
@@ -156,9 +138,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_BulkStringWithInvalidEndSequence_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("$3\r\nfoo\r ");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'7'");
         }
 
@@ -166,10 +147,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_EmptyBulkString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("$0\r\n\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual(string.Empty, response.Value);
@@ -179,10 +158,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_NullBulkString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("$-1\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.IsNull(response.Value);
@@ -192,10 +169,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_MultilineBulkString_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("$8\r\nfoo\r\nbar\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(StringResponse));
             Assert.AreEqual(DataType.BulkString, response.DataType);
             Assert.AreEqual("foo\r\nbar", response.Value);
@@ -205,10 +180,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_EmptyArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*0\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             Assert.AreEqual(0, ((object[])response.Value).Length);
@@ -218,9 +191,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_EmptyArrayWithInvalidEnd_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("*0");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -229,9 +201,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_EmptyArrayWithInvalidEndSequence_Throws()
         {
             var buffer = Resp.Encoding.GetBytes("*0\r ");
-            var target = new RespParser();
 
-            var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 1).ToArray());
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
             StringAssert.Contains(e.Message, "'1'");
         }
 
@@ -239,10 +210,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_NullArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*-1\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             Assert.IsNull(response.Value);
@@ -252,10 +221,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_IntegerArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*1\r\n:10\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
@@ -267,10 +234,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_BulkStringArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
@@ -283,10 +248,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_SimpleStringArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*1\r\n+foo\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
@@ -298,10 +261,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_MixedTypeArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*5\r\n:1\r\n:2\r\n:3\r\n:4\r\n$6\r\nfoobar\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
@@ -317,10 +278,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_ArrayOfArrays_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Foo\r\n-Bar\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
 
@@ -341,10 +300,8 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Parse_NullElementsInArray_ReadValue()
         {
             var buffer = Resp.Encoding.GetBytes("*3\r\n$3\r\nfoo\r\n$-1\r\n$3\r\nbar\r\n");
-            var target = new RespParser();
-            var responses = target.Parse(buffer, 1);
+            var response = buffer.Parse();
 
-            var response = responses.Single();
             Assert.IsInstanceOfType(response, typeof(ArrayResponse));
             Assert.AreEqual(DataType.Array, response.DataType);
             var result = (object[])response.Value;
@@ -358,10 +315,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
         [TestMethod]
         public void Parse_IncorrectNumberOfResponses_Throw()
         {
-            var target = new RespParser();
-
             var buffer = Resp.Encoding.GetBytes(":100\r\n");
-            Assert.ThrowsException<ProtocolViolationException>(() => target.Parse(buffer, 2).ToArray());
+
+            Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse(2).ToArray());
         }
     }
 }

@@ -15,10 +15,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var request = Mock.Of<IRequest>(r => r.Command == command);
             var buffer = new byte[128];
 
-            var target = new RespFormatter();
-            var length = target.Format(request, buffer);
+            var length = request.Format(buffer);
 
-            Assert.AreEqual(length, target.GetLength(request));
+            Assert.AreEqual(length, request.GetLength());
             Assert.AreEqual(expected, Resp.Encoding.GetString(buffer, 0, length));
         }
 
@@ -31,10 +30,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key });
             var buffer = new byte[128];
 
-            var target = new RespFormatter();
-            var length = target.Format(request, buffer);
+            var length = request.Format(buffer);
 
-            Assert.AreEqual(length, target.GetLength(request));
+            Assert.AreEqual(length, request.GetLength());
             Assert.AreEqual(expected, Resp.Encoding.GetString(buffer, 0, length));
         }
 
@@ -48,10 +46,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, value });
             var buffer = new byte[128];
 
-            var target = new RespFormatter();
-            var length = target.Format(request, buffer);
+            var length = request.Format(buffer);
 
-            Assert.AreEqual(length, target.GetLength(request));
+            Assert.AreEqual(length, request.GetLength());
             Assert.AreEqual(expected, Resp.Encoding.GetString(buffer, 0, length));
         }
 
@@ -65,10 +62,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, time });
             var buffer = new byte[128];
 
-            var target = new RespFormatter();
-            var length = target.Format(request, buffer);
+            var length = request.Format(buffer);
 
-            Assert.AreEqual(length, target.GetLength(request));
+            Assert.AreEqual(length, request.GetLength());
             Assert.AreEqual(expected, Resp.Encoding.GetString(buffer, 0, length));
         }
 
@@ -82,10 +78,9 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, timeSpan });
             var buffer = new byte[128];
 
-            var target = new RespFormatter();
-            var length = target.Format(request, buffer);
+            var length = request.Format(buffer);
 
-            Assert.AreEqual(length, target.GetLength(request));
+            Assert.AreEqual(length, request.GetLength());
             Assert.AreEqual(expected, Resp.Encoding.GetString(buffer, 0, length));
         }
     }

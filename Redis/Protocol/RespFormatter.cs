@@ -5,9 +5,9 @@ using System.Numerics;
 
 namespace Framework.Caching.Redis.Protocol
 {
-    internal class RespFormatter
+    internal static class RespFormatter
     {
-        public int Format(IRequest request, byte[] buffer)
+        public static int Format(this IRequest request, byte[] buffer)
         {
             // TODO replace by PIPE.IO ?
             Memory<byte> memory = buffer;
@@ -19,7 +19,7 @@ namespace Framework.Caching.Redis.Protocol
         }
 
         // TODO Tests ????
-        public int Format(IEnumerable<IRequest> requests, byte[] buffer)
+        public static int Format(this IEnumerable<IRequest> requests, byte[] buffer)
         {
             // TODO replace by PIPE.IO ?
             var count = 0;
@@ -37,7 +37,7 @@ namespace Framework.Caching.Redis.Protocol
             return count;
         }
 
-        internal int GetLength(IRequest request)
+        internal static int GetLength(this IRequest request)
         {
             var length = request.Command.Length + Resp.CRLF.Length;
             foreach (var arg in request.GetArgs())
@@ -60,7 +60,7 @@ namespace Framework.Caching.Redis.Protocol
             return length;
         }
 
-        public int GetLength(IEnumerable<IRequest> requests)
+        public static int GetLength(this IEnumerable<IRequest> requests)
         {
             return requests.Sum(r => GetLength(r));
         }

@@ -6,7 +6,7 @@ using System.Net;
 
 namespace Framework.Caching.Redis.Protocol
 {
-    internal class RespParser
+    internal static class RespParser
     {
         private const byte SimpleString = (byte)'+';
         private const byte Error = (byte)'-';
@@ -15,7 +15,16 @@ namespace Framework.Caching.Redis.Protocol
         private const byte Array = (byte)'*';
 
         // TODO Consider Memory<byte>
-        public IEnumerable<IResponse> Parse(byte[] buffer, int count)
+        public static IResponse Parse(this byte[] buffer)
+        {
+            // TODO change by a tuple ???
+            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
+            // TODO it should throw if still elements
+            return ParseElement(bufferState);
+        }
+
+        // TODO Consider Memory<byte>
+        public static IEnumerable<IResponse> Parse(this byte[] buffer, int count)
         {
             var bufferState = new BufferState { Buffer = buffer, Position = 0 };
             while (buffer.Length > bufferState.Position)
