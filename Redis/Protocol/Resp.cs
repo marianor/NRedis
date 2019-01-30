@@ -9,6 +9,7 @@ namespace Framework.Caching.Redis.Protocol
         public const string Success = "OK";
 
         public const byte Separator = (byte)' ';
+
         public static readonly byte[] CRLF = Encoding.GetBytes("\r\n");
     }
 }

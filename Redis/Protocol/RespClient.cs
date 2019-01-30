@@ -14,6 +14,9 @@ namespace Framework.Caching.Redis.Protocol
     // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
     {
+        private static readonly RespFormatter m_formatter = new RespFormatter();
+        private static readonly RespParser m_parser = new RespParser();
+
         private readonly RedisCacheOptions _optionsAccessor;
         private readonly ITransport _transport;
 
@@ -57,13 +60,13 @@ namespace Framework.Caching.Redis.Protocol
 
             Connect();
 
-            var length = request.Length;
+            var length = m_formatter.GetLength(request);
             using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
-                new RespFormatter().Format(request, input);
+                m_formatter.Format(request, input);
                 var output = _transport.Send(input, 0, length);
-                return new RespParser().Parse(output, 1).First();
+                return m_parser.Parse(output, 1).First();
             }
         }
 
@@ -76,13 +79,13 @@ namespace Framework.Caching.Redis.Protocol
 
             Connect();
 
-            var length = requests.Sum(r => r.Length);
+            var length = m_formatter.GetLength(requests);
             using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
-                var count = new RespFormatter().Format(requests, input);
+                var count = m_formatter.Format(requests, input);
                 var output = _transport.Send(input, 0, length);
-                return new RespParser().Parse(output, count);
+                return m_parser.Parse(output, count);
             }
         }
 
@@ -93,13 +96,13 @@ namespace Framework.Caching.Redis.Protocol
 
             await ConnectAsync(token).ConfigureAwait(false);
 
-            var length = request.Length;
+            var length = m_formatter.GetLength(request);
             using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
-                new RespFormatter().Format(request, input);
+                m_formatter.Format(request, input);
                 var output = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
-                return new RespParser().Parse(output, 1).First();
+                return m_parser.Parse(output, 1).First();
             }
         }
 
@@ -112,13 +115,13 @@ namespace Framework.Caching.Redis.Protocol
 
             await ConnectAsync(token).ConfigureAwait(false);
 
-            var length = requests.Sum(r => r.Length);
+            var length = m_formatter.GetLength(requests);
             using (var poolManager = new PoolManager<byte>(length))
             {
                 var input = poolManager.Buffer;
-                var count = new RespFormatter().Format(requests, input);
+                var count = m_formatter.Format(requests, input);
                 var responseBuffer = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
-                return new RespParser().Parse(responseBuffer, count);
+                return m_parser.Parse(responseBuffer, count);
             }
         }
 

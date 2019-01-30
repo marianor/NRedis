@@ -14,12 +14,12 @@ namespace Framework.Caching.Redis.Protocol
 
         public int Position { get; private set; }
 
-        public void WriteRaw(byte b)
+        public void Write(byte b)
         {
             _memory.Span[Position++] = b;
         }
 
-        public void WriteRaw(byte[] buffer)
+        public void Write(byte[] buffer)
         {
             var span = _memory.Slice(Position).Span;
             for (var i = 0; i < buffer.Length; i++)
@@ -30,7 +30,7 @@ namespace Framework.Caching.Redis.Protocol
 
         public void Write(string value)
         {
-            WriteRaw(Resp.Encoding.GetBytes(value));
+            Write(Resp.Encoding.GetBytes(value));
         }
 
         public void Write(long value)
