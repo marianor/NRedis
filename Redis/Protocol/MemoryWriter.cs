@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Buffers.Text;
+using System.Globalization;
+using System.IO.Pipelines;
+using System.Linq;
 
 namespace Framework.Caching.Redis.Protocol
 {
     internal class MemoryWriter
     {
         private readonly Memory<byte> _memory;
+        //private readonly PipeWriter x;
+
 
         public MemoryWriter(Memory<byte> memory)
         {
+            //var pipe = new Pipe();
+            //x = pipe.Writer;
             _memory = memory;
         }
 

@@ -23,8 +23,8 @@ namespace Framework.Caching.Redis
             {
                 m_serializer.Serialize(writer, value);
                 writer.Close();
-                //Base64.EncodeToUtf8InPlace
-                return Encoding.UTF8.GetBytes(Convert.ToBase64String(stream.ToArray()));
+                //return Encoding.UTF8.GetBytes(Convert.ToBase64String(stream.ToArray()));
+                return stream.ToArray();
             }
         }
 
@@ -33,7 +33,7 @@ namespace Framework.Caching.Redis
             if (buffer == null)
                 return default;
 
-            Base64.DecodeFromUtf8InPlace(buffer, out int bytesWritten);
+            //Base64.DecodeFromUtf8InPlace(buffer, out int bytesWritten);
             var encoded = buffer; // Convert.FromBase64String(Encoding.UTF8.GetString(buffer));
             using (var stream = new MemoryStream(encoded))
             using (var zipStream = new DeflateStream(stream, CompressionMode.Decompress))

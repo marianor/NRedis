@@ -8,10 +8,10 @@ namespace Framework.Caching.Redis.Protocol
     {
         IResponse Execute(IRequest request);
 
-        IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests);
+        IResponse[] Execute(IRequest[] requests);
 
         Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token);
 
-        Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token);
+        Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token);
     }
 }

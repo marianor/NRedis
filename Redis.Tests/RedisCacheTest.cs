@@ -189,7 +189,7 @@ namespace Framework.Caching.Redis.Tests
             Assert.AreEqual("EVAL", request.Command);
             Assert.AreEqual(4, request.GetArgs().Length);
             StringAssert.Contains(Resp.Encoding.GetString(request.GetArg<byte[]>(0)), "PEXPIRE");
-            Assert.AreEqual(1, request.GetArg<int>(1));
+            Assert.AreEqual((byte)'1', request.GetArg<byte>(1));
             Assert.AreEqual(expectedKey, request.GetArg<string>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
         }
@@ -246,7 +246,7 @@ namespace Framework.Caching.Redis.Tests
             Assert.AreEqual("EVAL", request.Command);
             Assert.AreEqual(4, request.GetArgs().Length);
             StringAssert.Contains(Resp.Encoding.GetString(request.GetArg<byte[]>(0)), "PEXPIRE");
-            Assert.AreEqual(1, request.GetArg<int>(1));
+            Assert.AreEqual((byte)'1', request.GetArg<byte>(1));
             Assert.AreEqual(expectedKey, request.GetArg<string>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
         }
@@ -412,9 +412,9 @@ namespace Framework.Caching.Redis.Tests
         public void Set_AbsoluteExpirationAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(response);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Set("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { AbsoluteExpiration = DateTimeOffset.Now.AddHours(1) }));
@@ -425,9 +425,9 @@ namespace Framework.Caching.Redis.Tests
         public void Set_SlidingExpirationAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(response);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Set("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromHours(1) }));
@@ -438,9 +438,9 @@ namespace Framework.Caching.Redis.Tests
         public void Set_AbsoluteExpirationRelativeToNowAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(response);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = Assert.ThrowsException<ProtocolViolationException>(() => target.Set("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) }));
@@ -472,15 +472,19 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), request.GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, request.GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), request.GetArg<byte[]>(4));
         }
 
         [TestMethod]
         public void Set_KeyValueAndAbsoluteExpiration_InvokeExecute()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(responses);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -489,19 +493,19 @@ namespace Framework.Caching.Redis.Tests
             target.Set(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))), Times.Once());
+            respClientMock.Verify(c => c.Execute(It.Is<IRequest[]>(r => assert(r))), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIREAT", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -511,9 +515,13 @@ namespace Framework.Caching.Redis.Tests
         [TestMethod]
         public void Set_KeyValueAndSlidingExpiration_InvokeExecute()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(responses);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -522,19 +530,19 @@ namespace Framework.Caching.Redis.Tests
             target.Set(expectedKey, expectedValue, new DistributedCacheEntryOptions { SlidingExpiration = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))), Times.Once());
+            respClientMock.Verify(c => c.Execute(It.Is<IRequest[]>(r => assert(r))), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(expectedExpiration, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(expectedExpiration.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -544,9 +552,13 @@ namespace Framework.Caching.Redis.Tests
         [TestMethod]
         public void Set_KeyValueAndAbsoluteExpirationRelativeToNow_InvokeExecute()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.Execute(It.IsAny<IEnumerable<IRequest>>())).Returns(responses);
+            respClientMock.Setup(c => c.Execute(It.IsAny<IRequest[]>())).Returns(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -555,19 +567,19 @@ namespace Framework.Caching.Redis.Tests
             target.Set(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.Execute(It.Is<IEnumerable<IRequest>>(r => assert(r))), Times.Once());
+            respClientMock.Verify(c => c.Execute(It.Is<IRequest[]>(r => assert(r))), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -627,9 +639,9 @@ namespace Framework.Caching.Redis.Tests
         public async Task SetAsync_AbsoluteExpirationAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(response);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = await Assert.ThrowsExceptionAsync<ProtocolViolationException>(() => target.SetAsync("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { AbsoluteExpiration = DateTimeOffset.Now.AddHours(1) }));
@@ -640,9 +652,9 @@ namespace Framework.Caching.Redis.Tests
         public async Task SetAsync_SlidingExpirationAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(response);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = await Assert.ThrowsExceptionAsync<ProtocolViolationException>(() => target.SetAsync("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromHours(1) }));
@@ -653,9 +665,9 @@ namespace Framework.Caching.Redis.Tests
         public async Task SetAsync_AbsoluteExpirationRelativeToNowAndErrorResponse_Throws()
         {
             var expectedMessage = "bar";
-            var response = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage);
+            var responses = Mocks.Of<IResponse>(r => r.DataType == DataType.Error && r.Value == (object)expectedMessage).Take(2).ToArray();
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(response);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
 
             var e = await Assert.ThrowsExceptionAsync<ProtocolViolationException>(() => target.SetAsync("foo", new byte[] { 65 }, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) }));
@@ -687,15 +699,19 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), request.GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, request.GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), request.GetArg<byte[]>(4));
         }
 
         [TestMethod]
         public async Task SetAsync_KeyValueAndAbsoluteExpiration_InvokeExecuteAsync()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -705,19 +721,19 @@ namespace Framework.Caching.Redis.Tests
             await target.SetAsync(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpiration = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IRequest[]>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIREAT", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -727,9 +743,13 @@ namespace Framework.Caching.Redis.Tests
         [TestMethod]
         public async Task SetAsync_KeyValueAndSlidingExpiration_InvokeExecuteAsync()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -738,19 +758,19 @@ namespace Framework.Caching.Redis.Tests
             await target.SetAsync(expectedKey, expectedValue, new DistributedCacheEntryOptions { SlidingExpiration = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IRequest[]>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(expectedExpiration, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(expectedExpiration.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -760,9 +780,13 @@ namespace Framework.Caching.Redis.Tests
         [TestMethod]
         public async Task SetAsync_KeyValueAndAbsoluteExpirationRelativeToNow_InvokeExecuteAsync()
         {
-            var responses = new[] { Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString), Mock.Of<IResponse>(r => r.DataType == DataType.Integer) };
+            var responses = new[]
+            {
+                Mock.Of<IResponse>(r => r.DataType == DataType.SimpleString),
+                Mock.Of<IResponse>(r => r.DataType == DataType.Integer)
+            };
             var respClientMock = new Mock<IRespClient>();
-            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IEnumerable<IRequest>>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
+            respClientMock.Setup(c => c.ExecuteAsync(It.IsAny<IRequest[]>(), It.IsAny<CancellationToken>())).ReturnsAsync(responses);
             var target = new RedisCache(new RedisCacheOptions(), respClientMock.Object);
             var expectedKey = "foo";
             var expectedValue = Resp.Encoding.GetBytes("bar");
@@ -771,19 +795,19 @@ namespace Framework.Caching.Redis.Tests
             await target.SetAsync(expectedKey, expectedValue, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expectedExpiration });
 
             IRequest[] requests = null;
-            Func<IEnumerable<IRequest>, bool> assert = r =>
+            Func<IRequest[], bool> assert = r =>
             {
-                requests = r.ToArray();
+                requests = r;
                 return r != null;
             };
-            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IEnumerable<IRequest>>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
+            respClientMock.Verify(c => c.ExecuteAsync(It.Is<IRequest[]>(r => assert(r)), It.IsAny<CancellationToken>()), Times.Once());
             Assert.AreEqual("HMSET", requests[0].Command);
             Assert.AreEqual(5, requests[0].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[0].GetArg<string>(0));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
+            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));

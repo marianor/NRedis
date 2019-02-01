@@ -67,11 +67,11 @@ namespace Framework.Caching.Redis.Protocol
             }
         }
 
-        public IEnumerable<IResponse> Execute(IEnumerable<IRequest> requests)
+        public IResponse[] Execute(IRequest[] requests)
         {
             if (requests == null)
                 throw new ArgumentNullException(nameof(requests));
-            if (!requests.Any())
+            if (requests.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
@@ -103,11 +103,11 @@ namespace Framework.Caching.Redis.Protocol
             }
         }
 
-        public async Task<IEnumerable<IResponse>> ExecuteAsync(IEnumerable<IRequest> requests, CancellationToken token = default)
+        public async Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token = default)
         {
             if (requests == null)
                 throw new ArgumentNullException(nameof(requests));
-            if (!requests.Any())
+            if (requests.Length == 0)
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);

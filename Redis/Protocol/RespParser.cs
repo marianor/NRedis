@@ -8,12 +8,6 @@ namespace Framework.Caching.Redis.Protocol
 {
     internal static class RespParser
     {
-        private const byte SimpleString = (byte)'+';
-        private const byte Error = (byte)'-';
-        private const byte Integer = (byte)':';
-        private const byte BulkString = (byte)'$';
-        private const byte Array = (byte)'*';
-
         // TODO Consider Memory<byte>
         public static IResponse Parse(this byte[] buffer)
         {
@@ -24,32 +18,34 @@ namespace Framework.Caching.Redis.Protocol
         }
 
         // TODO Consider Memory<byte>
-        public static IEnumerable<IResponse> Parse(this byte[] buffer, int count)
+        public static IResponse[] Parse(this byte[] buffer, int count)
         {
+            var i = 0;
+            var responses = new IResponse[count];
+
             var bufferState = new BufferState { Buffer = buffer, Position = 0 };
             while (buffer.Length > bufferState.Position)
-            {
-                count--;
-                yield return ParseElement(bufferState);
-            }
+                responses[i++] = ParseElement(bufferState);
 
-            if (count != 0)
+            if (i < count || i > count)
                 throw new ProtocolViolationException("Invalid responses"); // TODO check messages
+
+            return responses;
         }
 
         private static IResponse ParseElement(BufferState state)
         {
             switch (state.Buffer[state.Position++])
             {
-                case SimpleString:
-                    return new StringResponse(DataType.SimpleString, ParseSimpleString(state));
-                case Error:
-                    return new StringResponse(DataType.Error, ParseSimpleString(state));
-                case Integer:
-                    return new IntegerResponse(ParseInteger(state));
-                case BulkString:
+                case Resp.BulkString:
                     return new StringResponse(DataType.BulkString, ParseBulkString(state));
-                case Array:
+                case Resp.Integer:
+                    return new IntegerResponse(ParseInteger(state));
+                case Resp.Error:
+                    return new StringResponse(DataType.Error, ParseSimpleString(state));
+                case Resp.SimpleString:
+                    return new StringResponse(DataType.SimpleString, ParseSimpleString(state));
+                case Resp.Array:
                     return new ArrayResponse(ParseArray(state));
                 default:
                     throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar.Format(state.Position - 1));

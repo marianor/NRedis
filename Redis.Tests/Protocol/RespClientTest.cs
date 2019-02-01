@@ -33,7 +33,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Execute_RequestsIsNull_Throws()
         {
             var target = new RespClient(new RedisCacheOptions { Host = "foo" });
-            IEnumerable<IRequest> requests = null;
+            IRequest[] requests = null;
             var e = Assert.ThrowsException<ArgumentNullException>(() => target.Execute(requests));
 
             Assert.AreEqual(e.ParamName, "requests");
@@ -43,7 +43,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public void Execute_RequestsIsEmpty_Throws()
         {
             var target = new RespClient(new RedisCacheOptions { Host = "foo" });
-            var requests = Enumerable.Empty<IRequest>();
+            var requests = Array.Empty<IRequest>();
             var e = Assert.ThrowsException<ArgumentException>(() => target.Execute(requests));
 
             Assert.AreEqual(e.ParamName, "requests");
@@ -63,7 +63,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public async Task ExecuteAsync_RequestsIsNull_Throws()
         {
             var target = new RespClient(new RedisCacheOptions { Host = "foo" });
-            IEnumerable<IRequest> requests = null;
+            IRequest[] requests = null;
             var e = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => target.ExecuteAsync(requests));
 
             Assert.AreEqual(e.ParamName, "requests");
@@ -73,7 +73,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
         public async Task ExecuteAsync_RequestsIsEmpty_Throws()
         {
             var target = new RespClient(new RedisCacheOptions { Host = "foo" });
-            var requests = Enumerable.Empty<IRequest>();
+            var requests = Array.Empty<IRequest>();
             var e = await Assert.ThrowsExceptionAsync<ArgumentException>(() => target.ExecuteAsync(requests));
 
             Assert.AreEqual(e.ParamName, "requests");

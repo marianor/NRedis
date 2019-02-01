@@ -57,11 +57,11 @@ namespace Framework.Caching.Redis.Transport
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText(offset, count)}");
             _stream.Write(request, offset, count);
 
             var response = ReadResponse();
-            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText(0, response.Length)}");
             return response;
         }
 
@@ -70,11 +70,11 @@ namespace Framework.Caching.Redis.Transport
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText(offset, count)}");
             await _stream.WriteAsync(request, offset, count).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
-            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText(0, response.Length)}");
             return response;
         }
 

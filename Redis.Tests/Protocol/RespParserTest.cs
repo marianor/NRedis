@@ -317,7 +317,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
         {
             var buffer = Resp.Encoding.GetBytes(":100\r\n");
 
-            Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse(2).ToArray());
+            Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse(2));
         }
     }
 }
