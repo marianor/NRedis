@@ -90,7 +90,7 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);
-            var input = await requests.FormatAsync(token);
+            var input = await requests.FormatAsync(token).ConfigureAwait(false);
             var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
             return output.Parse((int)output.Length);
         }

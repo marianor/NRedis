@@ -11,7 +11,7 @@ namespace Framework.Caching.Redis.Protocol
         public static IResponse Parse(this ReadOnlySequence<byte> buffer)
         {
             // TODO change by a tuple ???
-            var bufferState = new BufferState { Buffer = buffer.ToArray(), Buffer2 = buffer, Position = 0 };
+            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
             // TODO it should throw if still elements
             return ParseElement(bufferState);
         }
@@ -22,7 +22,7 @@ namespace Framework.Caching.Redis.Protocol
             var i = 0;
             var responses = new IResponse[count];
 
-            var bufferState = new BufferState { Buffer = buffer.ToArray(), Buffer2 = buffer, Position = 0 };
+            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
             while (buffer.Length > bufferState.Position)
                 responses[i++] = ParseElement(bufferState);
 
@@ -34,12 +34,8 @@ namespace Framework.Caching.Redis.Protocol
 
         private static IResponse ParseElement(BufferState state)
         {
-            var buffer = state.Buffer2;
-            var p = buffer.GetPosition(0);
-            if (!buffer.TryGet(ref p, out ReadOnlyMemory<byte> mem))
-                throw new ProtocolViolationException(""); // TODO message
-
-            switch (mem.Span[state.Position++])
+            var mem = state.Buffer.Slice(state.Position++, 1).GetSpan();
+            switch (mem[0])
             {
                 case Resp.BulkString:
                     return new StringResponse(DataType.BulkString, ParseBulkString(state));
@@ -58,7 +54,7 @@ namespace Framework.Caching.Redis.Protocol
 
         private static byte[] ParseSimpleString(BufferState state)
         {
-            var buffer = state.Buffer.AsSpan(state.Position);
+            var buffer = state.Buffer.Slice(state.Position).GetSpan();
             var length = buffer.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
@@ -69,7 +65,7 @@ namespace Framework.Caching.Redis.Protocol
 
         private static byte[] ParseInteger(BufferState state)
         {
-            var buffer = state.Buffer.AsSpan(state.Position);
+            var buffer = state.Buffer.Slice(state.Position).GetSpan();
             var length = buffer.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
@@ -87,10 +83,16 @@ namespace Framework.Caching.Redis.Protocol
             if (length == -1)
                 return null;
 
-            var value = state.Buffer.AsSpan().Slice(state.Position, length).ToArray();
+            var span = state.Buffer.Slice(state.Position, length).GetSpan();
+            var value = span.ToArray(); // TODO marshal ?
             state.Position += length;
+
             // TODO compare Spans ???
-            if (state.Position >= state.Buffer.Length || state.Buffer[state.Position] != Resp.CRLF[0] || state.Buffer[state.Position + 1] != Resp.CRLF[1])
+            if (state.Position >= state.Buffer.Length)
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
+
+            var end = state.Buffer.Slice(state.Position, 2).GetSpan();
+            if (!end.SequenceEqual(Resp.CRLF))
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
 
             state.Position += 2;
@@ -113,12 +115,21 @@ namespace Framework.Caching.Redis.Protocol
             return array;
         }
 
-        [Obsolete("Use a Pipe")]
         private class BufferState
         {
-            public byte[] Buffer;
+            [Obsolete("Remove")]
             public int Position;
-            public ReadOnlySequence<byte> Buffer2;
+            public ReadOnlySequence<byte> Buffer;
+        }
+
+        // TODO send to extensions ???
+        private static ReadOnlySpan<byte> GetSpan(this ReadOnlySequence<byte> buffer)
+        {
+            var position = buffer.Start;
+            if (!buffer.TryGet(ref position, out ReadOnlyMemory<byte> memory))
+                throw new ProtocolViolationException(); // TODO exception
+
+            return memory.Span;
         }
     }
 }
