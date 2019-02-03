@@ -10,10 +10,9 @@ namespace Framework.Caching.Redis.Protocol
     {
         public static IResponse Parse(this ReadOnlySequence<byte> buffer)
         {
-            // TODO change by a tuple ???
-            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
+            var position = 0;
             // TODO it should throw if still elements
-            return ParseElement(bufferState);
+            return ParseElement(buffer, ref position);
         }
 
         // TODO Consider Memory<byte>
@@ -22,9 +21,9 @@ namespace Framework.Caching.Redis.Protocol
             var i = 0;
             var responses = new IResponse[count];
 
-            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
-            while (buffer.Length > bufferState.Position)
-                responses[i++] = ParseElement(bufferState);
+            var position = 0;
+            while (buffer.Length > position)
+                responses[i++] = buffer.ParseElement(ref position);
 
             if (i < count || i > count)
                 throw new ProtocolViolationException("Invalid responses"); // TODO check messages
@@ -32,94 +31,87 @@ namespace Framework.Caching.Redis.Protocol
             return responses;
         }
 
-        private static IResponse ParseElement(BufferState state)
+        private static IResponse ParseElement(this ReadOnlySequence<byte> buffer, ref int position)
         {
-            var mem = state.Buffer.Slice(state.Position++, 1).GetSpan();
-            switch (mem[0])
+            var span = buffer.Slice(position++, 1).GetSpan();
+            switch (span[0])
             {
                 case Resp.BulkString:
-                    return new StringResponse(DataType.BulkString, ParseBulkString(state));
+                    return new StringResponse(DataType.BulkString, buffer.ParseBulkString(ref position));
                 case Resp.Integer:
-                    return new IntegerResponse(ParseInteger(state));
+                    return new IntegerResponse(buffer.ParseInteger(ref position));
                 case Resp.Error:
-                    return new StringResponse(DataType.Error, ParseSimpleString(state));
+                    return new StringResponse(DataType.Error, buffer.ParseSimpleString(ref position));
                 case Resp.SimpleString:
-                    return new StringResponse(DataType.SimpleString, ParseSimpleString(state));
+                    return new StringResponse(DataType.SimpleString, buffer.ParseSimpleString(ref position));
                 case Resp.Array:
-                    return new ArrayResponse(ParseArray(state));
+                    return new ArrayResponse(buffer.ParseArray(ref position));
                 default:
-                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar.Format(state.Position - 1));
+                    throw new ProtocolViolationException(Resources.ProtocolViolationInvalidBeginChar.Format(position - 1));
             }
         }
 
-        private static byte[] ParseSimpleString(BufferState state)
+        private static byte[] ParseSimpleString(this ReadOnlySequence<byte> buffer, ref int position)
         {
-            var buffer = state.Buffer.Slice(state.Position).GetSpan();
-            var length = buffer.IndexOf(Resp.CRLF);
+            var span = buffer.Slice(position).GetSpan();
+            var length = span.IndexOf(Resp.CRLF);
             if (length == -1)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
-            state.Position += length + 2;
-            return buffer.Slice(0, length).ToArray();
+            position += length + 2;
+            return span.Slice(0, length).ToArray(); // TODO MemoryMarshal
         }
 
-        private static byte[] ParseInteger(BufferState state)
+        private static byte[] ParseInteger(this ReadOnlySequence<byte> buffer, ref int position)
         {
-            var buffer = state.Buffer.Slice(state.Position).GetSpan();
-            var length = buffer.IndexOf(Resp.CRLF);
+            var span = buffer.Slice(position).GetSpan();
+            var length = span.IndexOf(Resp.CRLF);
             if (length == -1)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
-            state.Position += length + 2;
-            return buffer.Slice(0, length).ToArray();
+            position += length + 2;
+            return span.Slice(0, length).ToArray();
         }
 
-        private static byte[] ParseBulkString(BufferState state)
+        private static byte[] ParseBulkString(this ReadOnlySequence<byte> buffer, ref int position)
         {
-            var lengthBuffer = ParseInteger(state);
+            var lengthBuffer = ParseInteger(buffer, ref position);
             if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
-                throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(state.Position));
+                throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(position));
 
             if (length == -1)
                 return null;
 
-            var span = state.Buffer.Slice(state.Position, length).GetSpan();
+            var span = buffer.Slice(position, length).GetSpan();
             var value = span.ToArray(); // TODO marshal ?
-            state.Position += length;
+            position += length;
 
             // TODO compare Spans ???
-            if (state.Position >= state.Buffer.Length)
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
+            if (position >= buffer.Length)
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
-            var end = state.Buffer.Slice(state.Position, 2).GetSpan();
+            var end = buffer.Slice(position, 2).GetSpan();
             if (!end.SequenceEqual(Resp.CRLF))
-                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(state.Position));
+                throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
-            state.Position += 2;
+            position += 2;
             return value;
         }
 
-        private static object[] ParseArray(BufferState state)
+        private static object[] ParseArray(this ReadOnlySequence<byte> buffer, ref int position)
         {
-            var lengthBuffer = ParseInteger(state);
+            var lengthBuffer = ParseInteger(buffer, ref position);
             if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
-                throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(state.Position));
+                throw new ProtocolViolationException(Resources.ProtocolViolationParsingInteger.Format(position));
 
             if (length == -1)
                 return null;
 
             var array = new object[length];
             for (var arrayIndex = 0; arrayIndex < length; arrayIndex++)
-                array[arrayIndex] = ParseElement(state).Value;
+                array[arrayIndex] = ParseElement(buffer, ref position).Value;
 
             return array;
-        }
-
-        private class BufferState
-        {
-            [Obsolete("Remove")]
-            public int Position;
-            public ReadOnlySequence<byte> Buffer;
         }
 
         // TODO send to extensions ???
