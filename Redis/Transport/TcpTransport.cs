@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers;
 using System.IO;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,8 +13,6 @@ namespace Framework.Caching.Redis.Transport
 {
     public class TcpTransport : ITransport, IDisposable
     {
-        private const int DefaultCapacity = 512;
-
         private TcpClient _client;
         private Stream _stream;
 
@@ -52,68 +53,86 @@ namespace Framework.Caching.Redis.Transport
 
         protected virtual async Task<Stream> GetStreamAsync(TcpClient client) => await Task.FromResult(client.GetStream()).ConfigureAwait(false);
 
-        public byte[] Send(byte[] request, int offset, int count)
+        public ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            Logger?.LogTrace(() => $"[Request] {request.ToLogText(offset, count)}");
-            _stream.Write(request, offset, count);
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
+            _stream.Write(request);
 
             var response = ReadResponse();
-            Logger?.LogTrace(() => $"[Response] {response.ToLogText(0, response.Length)}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
         }
 
-        public async Task<byte[]> SendAsync(byte[] request, int offset, int count, CancellationToken token = default)
+        public async Task<ReadOnlySequence<byte>> SendAsync(ReadOnlySequence<byte> request, CancellationToken token = default)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            Logger?.LogTrace(() => $"[Request] {request.ToLogText(offset, count)}");
-            await _stream.WriteAsync(request, offset, count).ConfigureAwait(false);
+            Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
+            await _stream.WriteAsync(request, token).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
-            Logger?.LogTrace(() => $"[Response] {response.ToLogText(0, response.Length)}");
+            Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
         }
 
-        private byte[] ReadResponse()
+        private ReadOnlySequence<byte> ReadResponse()
         {
-            // TODO change by PipeReader
-            using (var output = new MemoryStream(DefaultCapacity))
-            using (var poolManager = new PoolManager<byte>(DefaultCapacity))
-            {
-                var buffer = poolManager.Buffer;
-                var bytes = _stream.Read(buffer, 0, buffer.Length);
-                output.Write(buffer, 0, bytes);
-                while (bytes == buffer.Length)
-                {
-                    bytes = _stream.Read(buffer, 0, buffer.Length);
-                    output.Write(buffer, 0, bytes);
-                }
+            var pipe = new Pipe();
+            var writer = pipe.Writer;
 
-                return output.ToArray();
+            bool hasMoreData;
+            do
+            {
+                hasMoreData = ReadChunk(writer);
             }
+            while (hasMoreData);
+
+            writer.Complete();
+
+            if (!pipe.Reader.TryRead(out ReadResult result))
+                throw new InvalidOperationException(); // TODO exception
+
+            pipe.Reader.Complete();
+            return result.Buffer;
         }
 
-        private async Task<byte[]> ReadResponseAsync(CancellationToken token)
+        private async Task<ReadOnlySequence<byte>> ReadResponseAsync(CancellationToken token)
         {
-            // TODO change by PipeReader??
-            using (var output = new MemoryStream())
-            using (var poolManager = new PoolManager<byte>(DefaultCapacity))
-            {
-                var buffer = poolManager.Buffer;
-                var bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
-                while (bytes == buffer.Length)
-                {
-                    bytes = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
-                    await output.WriteAsync(buffer, 0, bytes, token).ConfigureAwait(false);
-                }
+            var pipe = new Pipe();
+            var writer = pipe.Writer;
 
-                return output.ToArray();
+            bool hasMoreData;
+            do
+            {
+                hasMoreData = await ReadChunkAsync(writer, token).ConfigureAwait(false);
             }
+            while (hasMoreData);
+
+            writer.Complete();
+
+            var result = await pipe.Reader.ReadAsync(token).ConfigureAwait(false);
+            pipe.Reader.Complete();
+            return result.Buffer;
+        }
+
+        private bool ReadChunk(PipeWriter writer)
+        {
+            var memory = writer.GetMemory();
+            if (!MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
+                throw new InvalidOperationException(); // TDOO ecceptions
+
+            var written = _stream.Read(buffer.Array, 0, memory.Length);
+            writer.Advance(written);
+            return memory.Length == written;
+        }
+
+        private async Task<bool> ReadChunkAsync(PipeWriter writer, CancellationToken token)
+        {
+            var memory = writer.GetMemory();
+            if (!MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
+                throw new InvalidOperationException(); // TDOO ecceptions
+
+            var written = await _stream.ReadAsync(buffer.Array, 0, memory.Length, token).ConfigureAwait(false);
+            writer.Advance(written);
+            return memory.Length == written;
         }
 
         public void Dispose()
@@ -138,6 +157,24 @@ namespace Framework.Caching.Redis.Transport
                     _client = null;
                 }
             }
+        }
+    }
+
+    [Obsolete("Move to other file")]
+    internal static class X
+    {
+        public static void Write(this Stream stream, ReadOnlySequence<byte> buffer)
+        {
+            foreach (var y in buffer)
+                stream.Write(y.Span.ToArray(), 0, y.Span.Length);
+            stream.Flush();
+        }
+
+        public static async Task WriteAsync(this Stream stream, ReadOnlySequence<byte> buffer, CancellationToken token)
+        {
+            foreach (var y in buffer)
+                await stream.WriteAsync(y.Span.ToArray(), 0, y.Span.Length, token).ConfigureAwait(false);
+            await stream.FlushAsync(token).ConfigureAwait(false);
         }
     }
 }

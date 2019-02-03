@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Framework.Caching.Redis.Protocol
+﻿namespace Framework.Caching.Redis.Protocol
 {
     public interface IRequest
     {

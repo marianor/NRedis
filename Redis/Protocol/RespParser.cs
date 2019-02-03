@@ -1,29 +1,28 @@
 ﻿using Framework.Caching.Redis.Properties;
 using System;
+using System.Buffers;
 using System.Buffers.Text;
-using System.Collections.Generic;
 using System.Net;
 
 namespace Framework.Caching.Redis.Protocol
 {
     internal static class RespParser
     {
-        // TODO Consider Memory<byte>
-        public static IResponse Parse(this byte[] buffer)
+        public static IResponse Parse(this ReadOnlySequence<byte> buffer)
         {
             // TODO change by a tuple ???
-            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
+            var bufferState = new BufferState { Buffer = buffer.ToArray(), Buffer2 = buffer, Position = 0 };
             // TODO it should throw if still elements
             return ParseElement(bufferState);
         }
 
         // TODO Consider Memory<byte>
-        public static IResponse[] Parse(this byte[] buffer, int count)
+        public static IResponse[] Parse(this ReadOnlySequence<byte> buffer, int count)
         {
             var i = 0;
             var responses = new IResponse[count];
 
-            var bufferState = new BufferState { Buffer = buffer, Position = 0 };
+            var bufferState = new BufferState { Buffer = buffer.ToArray(), Buffer2 = buffer, Position = 0 };
             while (buffer.Length > bufferState.Position)
                 responses[i++] = ParseElement(bufferState);
 
@@ -35,7 +34,12 @@ namespace Framework.Caching.Redis.Protocol
 
         private static IResponse ParseElement(BufferState state)
         {
-            switch (state.Buffer[state.Position++])
+            var buffer = state.Buffer2;
+            var p = buffer.GetPosition(0);
+            if (!buffer.TryGet(ref p, out ReadOnlyMemory<byte> mem))
+                throw new ProtocolViolationException(""); // TODO message
+
+            switch (mem.Span[state.Position++])
             {
                 case Resp.BulkString:
                     return new StringResponse(DataType.BulkString, ParseBulkString(state));
@@ -109,10 +113,12 @@ namespace Framework.Caching.Redis.Protocol
             return array;
         }
 
+        [Obsolete("Use a Pipe")]
         private class BufferState
         {
             public byte[] Buffer;
             public int Position;
+            public ReadOnlySequence<byte> Buffer2;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,8 +15,8 @@ namespace Framework.Caching.Redis.Transport
 
         Task ConnectAsync(CancellationToken token);
 
-        byte[] Send(byte[] request, int offset, int length);
+        ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request);
 
-        Task<byte[]> SendAsync(byte[] request, int offset, int length, CancellationToken token);
+        Task<ReadOnlySequence<byte>> SendAsync(ReadOnlySequence<byte> request, CancellationToken token);
     }
 }

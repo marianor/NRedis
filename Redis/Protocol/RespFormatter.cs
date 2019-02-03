@@ -1,148 +1,175 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Text;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO.Pipelines;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Framework.Caching.Redis.Protocol
 {
     internal static class RespFormatter
     {
-        public static int Format(this IRequest request, byte[] buffer)
+        public static ReadOnlySequence<byte> Format(this IRequest request)
         {
-            // TODO replace by PIPE.IO ?
-            Memory<byte> memory = buffer;
-            var writer = new MemoryWriter(memory);
-            return WriteCommandRequest(request, writer);
+            var pipe = new Pipe();
+            request.WriteCommandRequest(pipe.Writer);
+            pipe.Writer.Complete();
+
+            if (!pipe.Reader.TryRead(out ReadResult result))
+                throw new InvalidOperationException(); // TOOD exception
+
+            pipe.Reader.Complete();
+            return result.Buffer;
         }
 
-        private static int WriteCommandRequest(IRequest request, MemoryWriter writer)
+        public static ReadOnlySequence<byte> Format(this IRequest[] requests)
         {
-            writer.Write(Resp.Array);
-            writer.Write(request.GetArgs().Length + 1);
-            writer.Write(Resp.CRLF);
+            var pipe = new Pipe();
+            requests.WriteCommndsRequest(pipe.Writer);
+            pipe.Writer.Complete();
 
-            WriteBulkString(writer, request.Command);
-            WriteArgs(writer, request.GetArgs());
-            writer.Write(Resp.CRLF);
-            return writer.Position;
+            if (!pipe.Reader.TryRead(out ReadResult result))
+                throw new InvalidOperationException(); // TOOD exception
+
+            pipe.Reader.Complete();
+            return result.Buffer;
         }
 
-        // TODO Tests ????
-        public static int Format(this IEnumerable<IRequest> requests, byte[] buffer)
+        public static async Task<ReadOnlySequence<byte>> FormatAsync(this IRequest request, CancellationToken token)
         {
-            // TODO replace by PIPE.IO ?
-            var count = 0;
-            Memory<byte> memory = buffer;
-            var writer = new MemoryWriter(memory);
+            var pipe = new Pipe();
+            request.WriteCommandRequest(pipe.Writer);
+            pipe.Writer.Complete();
 
-            writer.Write(Resp.Array);
-            writer.Write(requests.Count());
-            writer.Write(Resp.CRLF);
+            var result = await pipe.Reader.ReadAsync(token);
+            pipe.Reader.Complete();
+            return result.Buffer;
+        }
+
+        public static async Task<ReadOnlySequence<byte>> FormatAsync(this IRequest[] requests, CancellationToken token)
+        {
+            var pipe = new Pipe();
+            requests.WriteCommndsRequest(pipe.Writer);
+            pipe.Writer.Complete();
+
+            var result = await pipe.Reader.ReadAsync(token);
+            pipe.Reader.Complete();
+            return result.Buffer;
+        }
+
+        private static void WriteCommndsRequest(this IRequest[] requests, PipeWriter writer)
+        {
+            writer.WriteByte(Resp.Array);
+            writer.WriteRawInt32(requests.Length);
 
             foreach (var request in requests)
-            {
-                WriteCommandRequest(request, writer);
-                count++;
-            }
+                request.WriteCommandRequest(writer);
 
-            writer.Write(Resp.CRLF);
-
-            return count;
+            writer.WriteRaw(Resp.CRLF);
         }
 
-        internal static int GetLength(this IRequest request)
+        private static void WriteCommandRequest(this IRequest request, PipeWriter writer)
         {
-            var endLength = Resp.CRLF.Length;
-            int length = CountDigits(request.GetArgs().Length + 1) + 3 + GetBulkStringLength(request.Command.Length) + endLength;
-            foreach (var arg in request.GetArgs())
-            {
-                if (arg is byte[] bytesArg)
-                    length += GetBulkStringLength(bytesArg.Length);
-                else if (arg is string stringArg)
-                    length += GetBulkStringLength(stringArg.Length);
-                else if (arg is DateTime dateTimeArg)
-                    length += CountDigits(((DateTimeOffset)dateTimeArg).ToUnixTimeMilliseconds()) + endLength + 1;
-                else if (arg is DateTimeOffset dateTimeOffsetArg)
-                    length += CountDigits(dateTimeOffsetArg.ToUnixTimeMilliseconds()) + endLength + 1;
-                else if (arg is TimeSpan timeSpanArg)
-                    length += CountDigits((long)timeSpanArg.TotalMilliseconds) + endLength + 1;
-                else if (arg is int intArg)
-                    length += CountDigits(intArg) + endLength + 1;
-                else if (arg is byte byteArg)
-                    length += CountDigits(byteArg) + endLength + 1;
-            }
+            writer.WriteByte(Resp.Array);
+            writer.WriteRawInt32(request.GetArgs().Length + 1);
+            writer.WriteRaw(Resp.CRLF);
 
-            return length;
+            writer.WriteBulkString(request.Command);
+            writer.WriteArgs(request.GetArgs());
+            writer.WriteRaw(Resp.CRLF);
         }
 
-        private static int GetBulkStringLength(int length)
+        private static void WriteByte(this PipeWriter writer, byte value)
         {
-            return length + CountDigits(length) + Resp.CRLF.Length * 2 + 1;
+            var span = writer.GetSpan(1);
+            span[0] = value;
+            writer.Advance(1);
         }
 
-        public static int GetLength(this IEnumerable<IRequest> requests)
+        private static void WriteInteger(this PipeWriter writer, int value)
         {
-            return requests.Sum(r => GetLength(r)) + CountDigits(requests.Count()) + Resp.CRLF.Length + 1;
+            writer.WriteByte(Resp.Integer);
+            writer.WriteRawInt32(value);
+            writer.WriteRaw(Resp.CRLF);
         }
 
-        private static int CountDigits(long value)
+        private static void WriteInteger(this PipeWriter writer, long value)
         {
-            if (value == 0)
-                return 1;
-            return (int)(Math.Log10(value) + 1);
+            writer.WriteByte(Resp.Integer);
+            writer.WriteRawInt64(value);
+            writer.WriteRaw(Resp.CRLF);
         }
 
-        private static void WriteArgs(MemoryWriter writer, IEnumerable<object> args)
+        private static void WriteBulkString(this PipeWriter writer, string value)
+        {
+            writer.WriteBulkString(Resp.Encoding.GetBytes(value));
+        }
+
+        private static void WriteBulkString(this PipeWriter writer, byte[] buffer)
+        {
+            writer.WriteByte(Resp.BulkString);
+            writer.WriteRawInt32(buffer.Length);
+            writer.WriteRaw(Resp.CRLF);
+            writer.WriteRaw(buffer);
+            writer.WriteRaw(Resp.CRLF);
+        }
+
+        private static void WriteNull(this PipeWriter writer)
+        {
+            writer.WriteByte(Resp.BulkString);
+            writer.WriteRawInt32(-1);
+            writer.WriteRaw(Resp.CRLF);
+        }
+
+        private static void WriteArgs(this PipeWriter writer, IEnumerable<object> args)
         {
             foreach (var arg in args)
             {
-                //writer.Write(Resp.Separator);
                 if (arg == null)
-                    WriteNull(writer);
-                if (arg is byte[] bytesArg)
-                    WriteBulkString(writer, bytesArg);
+                    writer.WriteNull();
+                else if (arg is byte byteArg)
+                    writer.WriteBulkString(new[] { byteArg });
+                else if (arg is byte[] bytesArg)
+                    writer.WriteBulkString(bytesArg);
                 else if (arg is string stringArg)
-                    WriteBulkString(writer, stringArg);
+                    writer.WriteBulkString(stringArg);
                 else if (arg is DateTime dateTimeArg)
-                    WriteInteger(writer, ((DateTimeOffset)dateTimeArg).ToUnixTimeMilliseconds());
+                    writer.WriteInteger(((DateTimeOffset)dateTimeArg).ToUnixTimeMilliseconds());
                 else if (arg is DateTimeOffset dateTimeOffsetArg)
-                    WriteInteger(writer, dateTimeOffsetArg.ToUnixTimeMilliseconds());
+                    writer.WriteInteger(dateTimeOffsetArg.ToUnixTimeMilliseconds());
                 else if (arg is TimeSpan timeSpanArg)
-                    WriteInteger(writer, (long)timeSpanArg.TotalMilliseconds);
+                    writer.WriteInteger((long)timeSpanArg.TotalMilliseconds);
                 else if (arg is int intArg)
-                    WriteInteger(writer, intArg);
+                    writer.WriteInteger(intArg);
                 else if (arg is long longArg)
-                    WriteInteger(writer, longArg);
-                if (arg is byte byteArg)
-                    WriteBulkString(writer, new[] { byteArg });
+                    writer.WriteInteger(longArg);
+                else
+                    throw new InvalidOperationException(); // TODO exception
             }
         }
 
-        private static void WriteBulkString(MemoryWriter writer, string stringArg)
+        private static void WriteRaw(this PipeWriter writer, byte[] buffer)
         {
-            WriteBulkString(writer, Resp.Encoding.GetBytes(stringArg));
+            var span = writer.GetSpan(buffer.Length);
+            buffer.CopyTo(span);
+            writer.Advance(buffer.Length);
         }
 
-        private static void WriteNull(MemoryWriter writer)
+        private static void WriteRawInt32(this PipeWriter writer, int value)
         {
-            writer.Write(Resp.BulkString);
-            writer.Write(-1);
-            writer.Write(Resp.CRLF);
+            var span = writer.GetSpan(11);
+            if (!Utf8Formatter.TryFormat(value, span, out int written))
+                throw new InvalidOperationException(); // TODO exception
+            writer.Advance(written);
         }
 
-        private static void WriteBulkString(MemoryWriter writer, byte[] bytesArg)
+        private static void WriteRawInt64(this PipeWriter writer, long value)
         {
-            writer.Write(Resp.BulkString);
-            writer.Write(bytesArg.Length);
-            writer.Write(Resp.CRLF);
-            writer.Write(bytesArg);
-            writer.Write(Resp.CRLF);
-        }
-
-        private static void WriteInteger(MemoryWriter writer, long dateTimeArg)
-        {
-            writer.Write(Resp.Integer);
-            writer.Write(dateTimeArg);
-            writer.Write(Resp.CRLF);
+            var span = writer.GetSpan(21);
+            if (!Utf8Formatter.TryFormat(value, span, out int written))
+                throw new InvalidOperationException(); // TODO exception
+            writer.Advance(written);
         }
     }
 }

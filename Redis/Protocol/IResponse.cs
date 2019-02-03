@@ -6,7 +6,6 @@
 
         DataType DataType { get; }
 
-        // TODO should it be here !!!!
         byte[] GetRawValue();
     }
 }

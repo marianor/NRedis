@@ -8,8 +8,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Buffers.Text;
 
 namespace Framework.Caching.Redis
 {

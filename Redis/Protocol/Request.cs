@@ -1,6 +1,5 @@
 ﻿using Framework.Caching.Redis.Properties;
 using System;
-using System.Numerics;
 
 namespace Framework.Caching.Redis.Protocol
 {

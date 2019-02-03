@@ -3,15 +3,12 @@ using Framework.Caching.Redis.Transport;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Framework.Caching.Redis.Protocol
 {
-    // Ver http://redis.io/topics/protocol
     public class RespClient : IRespClient
     {
         private readonly RedisCacheOptions _optionsAccessor;
@@ -56,15 +53,9 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             Connect();
-
-            var length = request.GetLength();
-            using (var poolManager = new PoolManager<byte>(length))
-            {
-                var input = poolManager.Buffer;
-                request.Format(input);
-                var output = _transport.Send(input, 0, length);
-                return output.Parse();
-            }
+            var input = request.Format();
+            var output = _transport.Send(input);
+            return output.Parse(); // TODO chenge
         }
 
         public IResponse[] Execute(IRequest[] requests)
@@ -75,15 +66,9 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             Connect();
-
-            var length = requests.GetLength();
-            using (var poolManager = new PoolManager<byte>(length))
-            {
-                var input = poolManager.Buffer;
-                var count = requests.Format(input);
-                var output = _transport.Send(input, 0, length);
-                return output.Parse(count);
-            }
+            var input = requests.Format();
+            var output = _transport.Send(input);
+            return output.Parse((int)output.Length);
         }
 
         public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default)
@@ -92,15 +77,9 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentNullException(nameof(request));
 
             await ConnectAsync(token).ConfigureAwait(false);
-
-            var length = request.GetLength();
-            using (var poolManager = new PoolManager<byte>(length))
-            {
-                var input = poolManager.Buffer;
-                request.Format(input);
-                var output = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
-                return output.Parse();
-            }
+            var input = await request.FormatAsync(token).ConfigureAwait(false);
+            var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
+            return output.Parse();
         }
 
         public async Task<IResponse[]> ExecuteAsync(IRequest[] requests, CancellationToken token = default)
@@ -111,15 +90,9 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ArgumentException(Resources.ArgumentCannotBeEmpty, nameof(requests));
 
             await ConnectAsync(token).ConfigureAwait(false);
-
-            var length = requests.GetLength();
-            using (var poolManager = new PoolManager<byte>(length))
-            {
-                var input = poolManager.Buffer;
-                var count = requests.Format(input);
-                var output = await _transport.SendAsync(input, 0, length, token).ConfigureAwait(false);
-                return output.Parse(count);
-            }
+            var input = await requests.FormatAsync(token);
+            var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
+            return output.Parse((int)output.Length);
         }
 
         private static void VerifyAuthentication(IResponse response)

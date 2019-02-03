@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Buffers;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Globalization;
@@ -30,16 +31,17 @@ namespace Framework.Caching.Redis
         public static void LogTrace(this ILogger logger, Func<string> formatter) => logger.Log(LogLevel.Trace, 0, (object)null, null, (s, e) => formatter());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToLogText(this byte[] buffer, int offset, int count)
+        public static string ToLogText(this ReadOnlySequence<byte> buffer)
         {
-            var builder = new StringBuilder(buffer.Length * 15 / 10);
-            foreach (var c in new ReadOnlySpan<byte>(buffer, offset, count))
-                if (m_replace.TryGetValue(c, out string replace))
-                    builder.Append(replace);
-                else if (char.IsControl((char)c))
-                    builder.AppendFormat(CultureInfo.InvariantCulture, "\\x{0:X}", c);
-                else
-                    builder.Append((char)c);
+            var builder = new StringBuilder();
+            foreach (var memory in buffer)
+                foreach (var b in memory.Span)
+                    if (m_replace.TryGetValue(b, out string replace))
+                        builder.Append(replace);
+                    else if (char.IsControl((char)b))
+                        builder.AppendFormat(CultureInfo.InvariantCulture, "\\x{0:X}", b);
+                    else
+                        builder.Append((char)b);
 
             return builder.ToString();
         }
