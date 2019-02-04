@@ -126,6 +126,9 @@
   <data name="ProtocolViolationInvalidEndChar" xml:space="preserve">
     <value>Invalid character detected at the end of the data, near position '{0}'.</value>
   </data>
+  <data name="ProtocolViolationNotExpectedData" xml:space="preserve">
+    <value>The response has some not expected data at position '{0}'.</value>
+  </data>
   <data name="ProtocolViolationParsingInteger" xml:space="preserve">
     <value>Cannot parse Integer value, near position '{0}'.</value>
   </data>

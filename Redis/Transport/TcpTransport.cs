@@ -56,7 +56,8 @@ namespace Framework.Caching.Redis.Transport
         public ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            _stream.Write(request);
+            var buffer = request.AsMemory().ToArray(); // TODO avoid reallocation
+            _stream.Write(buffer, 0, buffer.Length);
 
             var response = ReadResponse();
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
@@ -66,7 +67,8 @@ namespace Framework.Caching.Redis.Transport
         public async Task<ReadOnlySequence<byte>> SendAsync(ReadOnlySequence<byte> request, CancellationToken token = default)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            await _stream.WriteAsync(request, token).ConfigureAwait(false);
+            var buffer = request.AsSpan().ToArray(); // TODO avoid reallocation
+            await _stream.WriteAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
@@ -115,24 +117,18 @@ namespace Framework.Caching.Redis.Transport
 
         private bool ReadChunk(PipeWriter writer)
         {
-            var memory = writer.GetMemory();
-            if (!MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
-                throw new InvalidOperationException(); // TDOO ecceptions
-
-            var written = _stream.Read(buffer.Array, 0, memory.Length);
+            var buffer = writer.GetMemory().AsBytes();
+            var written = _stream.Read(buffer, 0, buffer.Length);
             writer.Advance(written);
-            return memory.Length == written;
+            return buffer.Length == written;
         }
 
         private async Task<bool> ReadChunkAsync(PipeWriter writer, CancellationToken token)
         {
-            var memory = writer.GetMemory();
-            if (!MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
-                throw new InvalidOperationException(); // TDOO ecceptions
-
-            var written = await _stream.ReadAsync(buffer.Array, 0, memory.Length, token).ConfigureAwait(false);
+            var buffer = writer.GetMemory().AsBytes();
+            var written = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
             writer.Advance(written);
-            return memory.Length == written;
+            return buffer.Length == written;
         }
 
         public void Dispose()
@@ -160,21 +156,23 @@ namespace Framework.Caching.Redis.Transport
         }
     }
 
-    [Obsolete("Move to other file")]
-    internal static class X
-    {
-        public static void Write(this Stream stream, ReadOnlySequence<byte> buffer)
-        {
-            foreach (var y in buffer)
-                stream.Write(y.Span.ToArray(), 0, y.Span.Length);
-            stream.Flush();
-        }
+    //internal static class X
+    //{
+    //    [Obsolete("Move to other file")]
+    //    public static void Write(this Stream stream, ReadOnlySequence<byte> buffer)
+    //    {
+    //        buffer.AsSpan().ToArray()
+    //        foreach (var y in buffer)
+    //            stream.Write(y.Span.ToArray(), 0, y.Span.Length);
+    //        stream.Flush();
+    //    }
 
-        public static async Task WriteAsync(this Stream stream, ReadOnlySequence<byte> buffer, CancellationToken token)
-        {
-            foreach (var y in buffer)
-                await stream.WriteAsync(y.Span.ToArray(), 0, y.Span.Length, token).ConfigureAwait(false);
-            await stream.FlushAsync(token).ConfigureAwait(false);
-        }
-    }
+    //    [Obsolete("Move to other file")]
+    //    public static async Task WriteAsync(this Stream stream, ReadOnlySequence<byte> buffer, CancellationToken token)
+    //    {
+    //        foreach (var y in buffer)
+    //            await stream.WriteAsync(y.Span.ToArray(), 0, y.Span.Length, token).ConfigureAwait(false);
+    //        await stream.FlushAsync(token).ConfigureAwait(false);
+    //    }
+    //}
 }

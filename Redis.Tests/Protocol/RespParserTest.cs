@@ -17,6 +17,15 @@ namespace Framework.Caching.Redis.Protocol.Tests
         }
 
         [TestMethod]
+        public void Parse_InvalidEnd_Throws()
+        {
+            var buffer = new ReadOnlySequence<byte>(Resp.Encoding.GetBytes("+foo\r\n+bar\r\n"));
+
+            var e = Assert.ThrowsException<ProtocolViolationException>(() => buffer.Parse());
+            StringAssert.Contains(e.Message, "'6'");
+        }
+
+        [TestMethod]
         public void Parse_EmptySimpleString_ReadValue()
         {
             var buffer = new ReadOnlySequence<byte>(Resp.Encoding.GetBytes("+\r\n"));

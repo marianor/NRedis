@@ -1,10 +1,13 @@
-﻿namespace Framework.Caching.Redis.Protocol
+﻿using System;
+
+namespace Framework.Caching.Redis.Protocol
 {
     public class StringResponse : IResponse
     {
+        // TODO change by ReadOnlyMemory<T>
         private readonly byte[] _value;
 
-        internal StringResponse(DataType valueType, byte[] value)
+        internal StringResponse(in DataType valueType, in byte[] value)
         {
             DataType = valueType;
             _value = value;

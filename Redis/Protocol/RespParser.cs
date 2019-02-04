@@ -8,15 +8,18 @@ namespace Framework.Caching.Redis.Protocol
 {
     internal static class RespParser
     {
-        public static IResponse Parse(this ReadOnlySequence<byte> buffer)
+        public static IResponse Parse(this in ReadOnlySequence<byte> buffer)
         {
             var position = 0;
-            // TODO it should throw if still elements
-            return ParseElement(buffer, ref position);
+            var response = ParseElement(buffer, ref position);
+            if (position < buffer.Length)
+                throw new ProtocolViolationException(Resources.ProtocolViolationNotExpectedData.Format(position));
+
+            return response;
         }
 
         // TODO Consider Memory<byte>
-        public static IResponse[] Parse(this ReadOnlySequence<byte> buffer, int count)
+        public static IResponse[] Parse(this in ReadOnlySequence<byte> buffer, int count)
         {
             var i = 0;
             var responses = new IResponse[count];
@@ -31,9 +34,9 @@ namespace Framework.Caching.Redis.Protocol
             return responses;
         }
 
-        private static IResponse ParseElement(this ReadOnlySequence<byte> buffer, ref int position)
+        private static IResponse ParseElement(this in ReadOnlySequence<byte> buffer, ref int position)
         {
-            var span = buffer.Slice(position++, 1).GetSpan();
+            var span = buffer.Slice(position++, 1).AsSpan();
             switch (span[0])
             {
                 case Resp.BulkString:
@@ -51,9 +54,9 @@ namespace Framework.Caching.Redis.Protocol
             }
         }
 
-        private static byte[] ParseSimpleString(this ReadOnlySequence<byte> buffer, ref int position)
+        private static byte[] ParseSimpleString(this in ReadOnlySequence<byte> buffer, ref int position)
         {
-            var span = buffer.Slice(position).GetSpan();
+            var span = buffer.Slice(position).AsSpan();
             var length = span.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
@@ -62,18 +65,18 @@ namespace Framework.Caching.Redis.Protocol
             return span.Slice(0, length).ToArray(); // TODO MemoryMarshal
         }
 
-        private static byte[] ParseInteger(this ReadOnlySequence<byte> buffer, ref int position)
+        private static byte[] ParseInteger(this in ReadOnlySequence<byte> buffer, ref int position)
         {
-            var span = buffer.Slice(position).GetSpan();
+            var span = buffer.Slice(position).AsSpan();
             var length = span.IndexOf(Resp.CRLF);
             if (length == -1)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
             position += length + 2;
-            return span.Slice(0, length).ToArray();
+            return span.Slice(0, length).ToArray(); // TODO avoid reallocation
         }
 
-        private static byte[] ParseBulkString(this ReadOnlySequence<byte> buffer, ref int position)
+        private static byte[] ParseBulkString(this in ReadOnlySequence<byte> buffer, ref int position)
         {
             var lengthBuffer = ParseInteger(buffer, ref position);
             if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
@@ -82,23 +85,22 @@ namespace Framework.Caching.Redis.Protocol
             if (length == -1)
                 return null;
 
-            var span = buffer.Slice(position, length).GetSpan();
-            var value = span.ToArray(); // TODO marshal ?
+            var memory = buffer.Slice(position, length).AsMemory();
+            var value = memory.ToArray(); // TODO marshal ?
             position += length;
 
             // TODO compare Spans ???
             if (position >= buffer.Length)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
-            var end = buffer.Slice(position, 2).GetSpan();
-            if (!end.SequenceEqual(Resp.CRLF))
+            if (!buffer.Slice(position, 2).AsSpan().SequenceEqual(Resp.CRLF))
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
             position += 2;
             return value;
         }
 
-        private static object[] ParseArray(this ReadOnlySequence<byte> buffer, ref int position)
+        private static object[] ParseArray(this in ReadOnlySequence<byte> buffer, ref int position)
         {
             var lengthBuffer = ParseInteger(buffer, ref position);
             if (!Utf8Parser.TryParse(lengthBuffer, out int length, out _))
@@ -112,16 +114,6 @@ namespace Framework.Caching.Redis.Protocol
                 array[arrayIndex] = ParseElement(buffer, ref position).Value;
 
             return array;
-        }
-
-        // TODO send to extensions ???
-        private static ReadOnlySpan<byte> GetSpan(this ReadOnlySequence<byte> buffer)
-        {
-            var position = buffer.Start;
-            if (!buffer.TryGet(ref position, out ReadOnlyMemory<byte> memory))
-                throw new ProtocolViolationException(); // TODO exception
-
-            return memory.Span;
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Framework.Caching.Redis.Protocol
 {
     public class ArrayResponse : IResponse
     {
-        internal ArrayResponse(object[] value) => Value = value;
+        internal ArrayResponse(in object[] value) => Value = value;
 
         public IEnumerable<object> Value { get; }
 
