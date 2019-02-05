@@ -4,21 +4,22 @@ namespace Framework.Caching.Redis.Protocol
 {
     public class StringResponse : IResponse
     {
-        // TODO change by ReadOnlyMemory<T>
-        private readonly byte[] _value;
+        private readonly byte[] _rawValue;
+        private readonly Lazy<string> _value;
 
-        internal StringResponse(in DataType valueType, in byte[] value)
+        internal StringResponse(in DataType valueType, in byte[] rawValue)
         {
             DataType = valueType;
-            _value = value;
+            _rawValue = rawValue;
+            _value = new Lazy<string>(() => _rawValue == null ? null : Resp.Encoding.GetString(_rawValue));
         }
 
         public DataType DataType { get; }
 
-        public string Value => _value == null ? null : Resp.Encoding.GetString(_value);
+        public string Value => _value.Value;
 
-        object IResponse.Value => Value;
+        object IResponse.Value => _value.Value;
 
-        public byte[] GetRawValue() => _value;
+        public byte[] GetRawValue() => _rawValue;
     }
 }

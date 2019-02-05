@@ -83,7 +83,7 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
             position += length + 2;
-            return span.Slice(0, length).ToArray(); // TODO avoid reallocation
+            return span.Slice(0, length).ToArray();
         }
 
         private static byte[] ParseBulkString(this in ReadOnlySequence<byte> buffer, ref int position)
@@ -95,10 +95,9 @@ namespace Framework.Caching.Redis.Protocol
             if (length == -1)
                 return null;
 
-            var value = buffer.Slice(position, length).ToArray(); // TODO try to avoid reallocation ???
+            var value = buffer.Slice(position, length).ToArray();
             position += length;
 
-            // TODO compare Spans ???
             if (position >= buffer.Length)
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
@@ -119,8 +118,8 @@ namespace Framework.Caching.Redis.Protocol
                 return null;
 
             var array = new object[length];
-            for (var arrayIndex = 0; arrayIndex < length; arrayIndex++)
-                array[arrayIndex] = ParseElement(buffer, ref position).Value;
+            for (var index = 0; index < length; index++)
+                array[index] = ParseElement(buffer, ref position).Value;
 
             return array;
         }
