@@ -55,7 +55,7 @@ namespace Framework.Caching.Redis.Protocol
             Connect();
             var input = request.Format();
             var output = _transport.Send(input);
-            return output.Parse(); // TODO chenge
+            return output.Parse();
         }
 
         public IResponse[] Execute(IRequest[] requests)
@@ -68,7 +68,7 @@ namespace Framework.Caching.Redis.Protocol
             Connect();
             var input = requests.Format();
             var output = _transport.Send(input);
-            return output.Parse((int)output.Length);
+            return output.Parse(requests.Length);
         }
 
         public async Task<IResponse> ExecuteAsync(IRequest request, CancellationToken token = default)
@@ -92,7 +92,7 @@ namespace Framework.Caching.Redis.Protocol
             await ConnectAsync(token).ConfigureAwait(false);
             var input = await requests.FormatAsync(token).ConfigureAwait(false);
             var output = await _transport.SendAsync(input, token).ConfigureAwait(false);
-            return output.Parse((int)output.Length);
+            return output.Parse(requests.Length);
         }
 
         private static void VerifyAuthentication(IResponse response)

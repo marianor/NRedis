@@ -2,6 +2,7 @@
 using System;
 using System.Buffers;
 using System.Buffers.Text;
+using System.Linq;
 using System.Net;
 
 namespace Framework.Caching.Redis.Protocol
@@ -19,16 +20,25 @@ namespace Framework.Caching.Redis.Protocol
         }
 
         // TODO Consider Memory<byte>
-        public static IResponse[] Parse(this in ReadOnlySequence<byte> buffer, int count)
+        public static IResponse[] Parse(this in ReadOnlySequence<byte> buffer, in int count)
         {
             var i = 0;
-            var responses = new IResponse[count];
-
             var position = 0;
+            var responses = new IResponse[count];
             while (buffer.Length > position)
                 responses[i++] = buffer.ParseElement(ref position);
 
-            if (i < count || i > count)
+            if (position < buffer.Length)
+                throw new ProtocolViolationException(Resources.ProtocolViolationNotExpectedData.Format(position));
+
+            if (i < count && responses[i - 1].DataType == DataType.Error)
+            {
+                var result = new IResponse[i];
+                responses.CopyTo(result, 0);
+                return result;
+            }
+
+            if (i != count)
                 throw new ProtocolViolationException("Invalid responses"); // TODO check messages
 
             return responses;
@@ -85,8 +95,7 @@ namespace Framework.Caching.Redis.Protocol
             if (length == -1)
                 return null;
 
-            var memory = buffer.Slice(position, length).AsMemory();
-            var value = memory.ToArray(); // TODO marshal ?
+            var value = buffer.Slice(position, length).ToArray(); // TODO try to avoid reallocation ???
             position += length;
 
             // TODO compare Spans ???

@@ -55,7 +55,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var command = "PEXPIREAT";
             var key = "foo";
             var time = new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero);
-            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n:{time.ToUnixTimeMilliseconds()}\r\n\r\n");
+            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n${time.ToUnixTimeMilliseconds().ToString().Length}\r\n{time.ToUnixTimeMilliseconds()}\r\n\r\n");
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, time });
 
             var buffer = request.Format();
@@ -69,7 +69,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var command = "PEXPIRE";
             var key = "foo";
             var timeSpan = TimeSpan.FromMilliseconds(18000000);
-            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n:{timeSpan.TotalMilliseconds:0}\r\n\r\n");
+            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n${timeSpan.TotalMilliseconds.ToString("0").Length}\r\n{timeSpan.TotalMilliseconds:0}\r\n\r\n");
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, timeSpan });
 
             var buffer = request.Format();
@@ -122,7 +122,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var command = "PEXPIREAT";
             var key = "foo";
             var time = new DateTimeOffset(2017, 8, 1, 10, 30, 10, TimeSpan.Zero);
-            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n:{time.ToUnixTimeMilliseconds()}\r\n\r\n");
+            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n${time.ToUnixTimeMilliseconds().ToString().Length}\r\n{time.ToUnixTimeMilliseconds()}\r\n\r\n");
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, time });
 
             var buffer = await request.FormatAsync(CancellationToken.None);
@@ -136,7 +136,7 @@ namespace Framework.Caching.Redis.Protocol.Tests
             var command = "PEXPIRE";
             var key = "foo";
             var timeSpan = TimeSpan.FromMilliseconds(18000000);
-            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n:{timeSpan.TotalMilliseconds:0}\r\n\r\n");
+            var expected = Resp.Encoding.GetBytes($"*3\r\n${command.Length}\r\n{command}\r\n${key.Length}\r\n{key}\r\n${timeSpan.TotalMilliseconds.ToString("0").Length}\r\n{timeSpan.TotalMilliseconds:0}\r\n\r\n");
             var request = Mock.Of<IRequest>(r => r.Command == command && r.GetArgs() == new object[] { key, timeSpan });
 
             var buffer = await request.FormatAsync(CancellationToken.None);

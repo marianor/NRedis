@@ -63,6 +63,7 @@ namespace Framework.Caching.Redis.Tester
             }
             finally
             {
+                await Console.Out.WriteLineAsync("Execution finished, press any key to continue").ConfigureAwait(false);
                 Console.ReadKey();
             }
         }
@@ -105,7 +106,7 @@ namespace Framework.Caching.Redis.Tester
         private static async Task SetAsync(IDistributedCache cache, string key, object value)
         {
             var serializedValue = Serializer.Serialize(value);
-            await cache.SetAsync(key, serializedValue /*, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) }*/).ConfigureAwait(false);
+            await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
         }
 
         private static string GetNugetFolder()

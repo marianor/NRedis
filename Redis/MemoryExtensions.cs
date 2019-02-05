@@ -14,26 +14,27 @@ namespace Framework.Caching.Redis
             throw new InvalidOperationException(); // TDOO ecceptions
         }
 
-        public static byte[] AsBytes(this in ReadOnlyMemory<byte> memory)
+        public static ArraySegment<byte> AsSegment(this in ReadOnlySequence<byte> buffer)
         {
-            if (MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
-                return buffer.Array;
+            if (MemoryMarshal.TryGetArray(buffer.AsMemory(), out ArraySegment<byte> segment))
+                return segment;
 
             throw new InvalidOperationException(); // TDOO ecceptions
         }
 
-        public static ReadOnlyMemory<byte> AsMemory(this in ReadOnlySequence<byte> buffer)
-        {
-            var position = buffer.Start;
-            if (buffer.TryGet(ref position, out ReadOnlyMemory<byte> memory))
-                return memory;
-
-            throw new InvalidOperationException(); // TODO exception
-        }
 
         public static ReadOnlySpan<byte> AsSpan(this in ReadOnlySequence<byte> buffer)
         {
             return buffer.AsMemory().Span;
+        }
+
+        private static ReadOnlyMemory<T> AsMemory<T>(this in ReadOnlySequence<T> buffer)
+        {
+            var position = buffer.Start;
+            if (buffer.TryGet(ref position, out ReadOnlyMemory<T> memory))
+                return memory;
+
+            throw new InvalidOperationException(); // TODO exception
         }
     }
 }

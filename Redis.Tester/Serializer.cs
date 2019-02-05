@@ -1,9 +1,6 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Buffers.Text;
 using System.IO;
 using System.IO.Compression;
-using System.Text;
 
 namespace Framework.Caching.Redis
 {
@@ -23,7 +20,6 @@ namespace Framework.Caching.Redis
             {
                 m_serializer.Serialize(writer, value);
                 writer.Close();
-                //return Encoding.UTF8.GetBytes(Convert.ToBase64String(stream.ToArray()));
                 return stream.ToArray();
             }
         }
@@ -33,9 +29,7 @@ namespace Framework.Caching.Redis
             if (buffer == null)
                 return default;
 
-            //Base64.DecodeFromUtf8InPlace(buffer, out int bytesWritten);
-            var encoded = buffer; // Convert.FromBase64String(Encoding.UTF8.GetString(buffer));
-            using (var stream = new MemoryStream(encoded))
+            using (var stream = new MemoryStream(buffer))
             using (var zipStream = new DeflateStream(stream, CompressionMode.Decompress))
             using (var textReader = new StreamReader(zipStream))
             using (var reader = new JsonTextReader(textReader))

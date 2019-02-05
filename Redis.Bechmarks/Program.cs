@@ -1,17 +1,12 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using Framework.Caching.Redis;
-using Microsoft.Extensions.Caching.Distributed;
-using System;
-using System.Threading.Tasks;
+﻿using BenchmarkDotNet.Running;
 
 namespace Framework.Caching.Redis.Bechmarks
 {
     public class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
-            var summary = BenchmarkRunner.Run<Benchmark>();
+            BenchmarkRunner.Run<Benchmark>();
         }
     }
 }

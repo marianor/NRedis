@@ -60,24 +60,19 @@ namespace Framework.Caching.Redis.Protocol
 
         private static void WriteCommndsRequest(this IRequest[] requests, PipeWriter writer)
         {
-            writer.WriteByte(Resp.Array);
-            writer.WriteRawInt32(requests.Length);
-
             foreach (var request in requests)
                 request.WriteCommandRequest(writer);
-
-            writer.WriteRaw(Resp.CRLF);
         }
 
         private static void WriteCommandRequest(this IRequest request, PipeWriter writer)
         {
             writer.WriteByte(Resp.Array);
             writer.WriteRawInt32(request.GetArgs().Length + 1);
-            writer.WriteRaw(Resp.CRLF);
+            writer.Write(Resp.CRLF);
 
             writer.WriteBulkString(request.Command);
             writer.WriteArgs(request.GetArgs());
-            writer.WriteRaw(Resp.CRLF);
+            writer.Write(Resp.CRLF);
         }
 
         private static void WriteByte(this PipeWriter writer, byte value)
@@ -87,39 +82,51 @@ namespace Framework.Caching.Redis.Protocol
             writer.Advance(1);
         }
 
-        private static void WriteInteger(this PipeWriter writer, int value)
+        private static void WriteInteger(this PipeWriter writer, in int value)
         {
-            writer.WriteByte(Resp.Integer);
-            writer.WriteRawInt32(value);
-            writer.WriteRaw(Resp.CRLF);
+            Span<byte> span = new byte[11];
+            if (!Utf8Formatter.TryFormat(value, span, out int written))
+                throw new InvalidOperationException(); // TODO exception
+
+            writer.WriteByte(Resp.BulkString);
+            writer.WriteRawInt32(written);
+            writer.Write(Resp.CRLF);
+            writer.Write(span.Slice(0, written));
+            writer.Write(Resp.CRLF);
         }
 
-        private static void WriteInteger(this PipeWriter writer, long value)
+        private static void WriteInteger(this PipeWriter writer, in long value)
         {
-            writer.WriteByte(Resp.Integer);
-            writer.WriteRawInt64(value);
-            writer.WriteRaw(Resp.CRLF);
+            Span<byte> span = new byte[21];
+            if (!Utf8Formatter.TryFormat(value, span, out int written))
+                throw new InvalidOperationException(); // TODO exception
+
+            writer.WriteByte(Resp.BulkString);
+            writer.WriteRawInt32(written);
+            writer.Write(Resp.CRLF);
+            writer.Write(span.Slice(0, written));
+            writer.Write(Resp.CRLF);
         }
 
-        private static void WriteBulkString(this PipeWriter writer, string value)
+        private static void WriteBulkString(this PipeWriter writer, in string value)
         {
             writer.WriteBulkString(Resp.Encoding.GetBytes(value));
         }
 
-        private static void WriteBulkString(this PipeWriter writer, byte[] buffer)
+        private static void WriteBulkString(this PipeWriter writer, in byte[] buffer)
         {
             writer.WriteByte(Resp.BulkString);
             writer.WriteRawInt32(buffer.Length);
-            writer.WriteRaw(Resp.CRLF);
-            writer.WriteRaw(buffer);
-            writer.WriteRaw(Resp.CRLF);
+            writer.Write(Resp.CRLF);
+            writer.Write(buffer);
+            writer.Write(Resp.CRLF);
         }
 
         private static void WriteNull(this PipeWriter writer)
         {
             writer.WriteByte(Resp.BulkString);
             writer.WriteRawInt32(-1);
-            writer.WriteRaw(Resp.CRLF);
+            writer.Write(Resp.CRLF);
         }
 
         private static void WriteArgs(this PipeWriter writer, IEnumerable<object> args)
@@ -149,24 +156,9 @@ namespace Framework.Caching.Redis.Protocol
             }
         }
 
-        private static void WriteRaw(this PipeWriter writer, byte[] buffer)
-        {
-            var span = writer.GetSpan(buffer.Length);
-            buffer.CopyTo(span);
-            writer.Advance(buffer.Length);
-        }
-
-        private static void WriteRawInt32(this PipeWriter writer, int value)
+        private static void WriteRawInt32(this PipeWriter writer, in int value)
         {
             var span = writer.GetSpan(11);
-            if (!Utf8Formatter.TryFormat(value, span, out int written))
-                throw new InvalidOperationException(); // TODO exception
-            writer.Advance(written);
-        }
-
-        private static void WriteRawInt64(this PipeWriter writer, long value)
-        {
-            var span = writer.GetSpan(21);
             if (!Utf8Formatter.TryFormat(value, span, out int written))
                 throw new InvalidOperationException(); // TODO exception
             writer.Advance(written);

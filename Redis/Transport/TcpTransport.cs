@@ -56,8 +56,8 @@ namespace Framework.Caching.Redis.Transport
         public ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            var buffer = request.AsMemory().ToArray(); // TODO avoid reallocation
-            _stream.Write(buffer, 0, buffer.Length);
+            var buffer = request.AsSegment();
+            _stream.Write(buffer.Array, buffer.Offset, buffer.Count);
 
             var response = ReadResponse();
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
@@ -67,8 +67,8 @@ namespace Framework.Caching.Redis.Transport
         public async Task<ReadOnlySequence<byte>> SendAsync(ReadOnlySequence<byte> request, CancellationToken token = default)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            var buffer = request.AsSpan().ToArray(); // TODO avoid reallocation
-            await _stream.WriteAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+            var buffer = request.AsSegment();
+            await _stream.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, token).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
