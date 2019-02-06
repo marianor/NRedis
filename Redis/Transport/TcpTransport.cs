@@ -21,7 +21,6 @@ namespace Framework.Caching.Redis.Transport
             Host = host ?? throw new ArgumentNullException(nameof(host));
             if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
                 throw new ArgumentOutOfRangeException(nameof(port));
-
             Port = port;
         }
 
@@ -56,8 +55,7 @@ namespace Framework.Caching.Redis.Transport
         public ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            var buffer = request.AsSegment();
-            _stream.Write(buffer.Array, buffer.Offset, buffer.Count);
+            WriteRequest(request);
 
             var response = ReadResponse();
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
@@ -67,12 +65,33 @@ namespace Framework.Caching.Redis.Transport
         public async Task<ReadOnlySequence<byte>> SendAsync(ReadOnlySequence<byte> request, CancellationToken token = default)
         {
             Logger?.LogTrace(() => $"[Request] {request.ToLogText()}");
-            var buffer = request.AsSegment();
-            await _stream.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, token).ConfigureAwait(false);
+            await WriteRequestAsync(request, token).ConfigureAwait(false);
 
             var response = await ReadResponseAsync(token).ConfigureAwait(false);
             Logger?.LogTrace(() => $"[Response] {response.ToLogText()}");
             return response;
+        }
+
+        private void WriteRequest(ReadOnlySequence<byte> request)
+        {
+            foreach (var memory in request)
+            {
+                var buffer = memory.AsSegment();
+                _stream.Write(buffer.Array, buffer.Offset, buffer.Count);
+            }
+
+            _stream.Flush();
+        }
+
+        private async Task WriteRequestAsync(ReadOnlySequence<byte> request, CancellationToken token)
+        {
+            foreach (var memory in request)
+            {
+                var buffer = memory.AsSegment();
+                await _stream.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, token).ConfigureAwait(false);
+            }
+
+            await _stream.FlushAsync().ConfigureAwait(false);
         }
 
         private ReadOnlySequence<byte> ReadResponse()
@@ -117,18 +136,18 @@ namespace Framework.Caching.Redis.Transport
 
         private bool ReadChunk(PipeWriter writer)
         {
-            var buffer = writer.GetMemory().AsBytes();
-            var written = _stream.Read(buffer, 0, buffer.Length);
+            var buffer = writer.GetMemory().AsSegment();
+            var written = _stream.Read(buffer.Array, buffer.Offset, buffer.Count);
             writer.Advance(written);
-            return buffer.Length == written;
+            return buffer.Count == written;
         }
 
         private async Task<bool> ReadChunkAsync(PipeWriter writer, CancellationToken token)
         {
-            var buffer = writer.GetMemory().AsBytes();
-            var written = await _stream.ReadAsync(buffer, 0, buffer.Length, token).ConfigureAwait(false);
+            var buffer = writer.GetMemory().AsSegment();
+            var written = await _stream.ReadAsync(buffer.Array, buffer.Offset, buffer.Count, token).ConfigureAwait(false);
             writer.Advance(written);
-            return buffer.Length == written;
+            return buffer.Count == written;
         }
 
         public void Dispose()

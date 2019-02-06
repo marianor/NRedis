@@ -33,9 +33,7 @@ namespace Framework.Caching.Redis
             using (var zipStream = new DeflateStream(stream, CompressionMode.Decompress))
             using (var textReader = new StreamReader(zipStream))
             using (var reader = new JsonTextReader(textReader))
-            {
                 return m_serializer.Deserialize<T>(reader);
-            }
         }
     }
 }

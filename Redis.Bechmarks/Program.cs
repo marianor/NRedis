@@ -4,6 +4,6 @@ namespace Framework.Caching.Redis.Bechmarks
 {
     public class Program
     {
-        private static void Main(string[] args) => BenchmarkRunner.Run<Benchmark>();
+        private static void Main() => BenchmarkRunner.Run<Benchmark>();
     }
 }

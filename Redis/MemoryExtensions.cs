@@ -6,33 +6,26 @@ namespace Framework.Caching.Redis
 {
     internal static class MemoryExtensions
     {
-        public static byte[] AsBytes(this in Memory<byte> memory)
+        public static ArraySegment<T> AsSegment<T>(this in Memory<T> memory)
         {
-            if (MemoryMarshal.TryGetArray(memory, out ArraySegment<byte> buffer))
-                return buffer.Array;
-
-            throw new InvalidOperationException(); // TDOO ecceptions
+            ReadOnlyMemory<T> readOnlyMemory = memory;
+            return readOnlyMemory.AsSegment();
         }
 
-        public static ArraySegment<byte> AsSegment(this in ReadOnlySequence<byte> buffer)
+        public static ArraySegment<T> AsSegment<T>(this in ReadOnlyMemory<T> memory)
         {
-            if (MemoryMarshal.TryGetArray(buffer.AsMemory(), out ArraySegment<byte> segment))
+            if (MemoryMarshal.TryGetArray(memory, out ArraySegment<T> segment))
                 return segment;
 
             throw new InvalidOperationException(); // TDOO ecceptions
         }
 
-
-        public static ReadOnlySpan<byte> AsSpan(this in ReadOnlySequence<byte> buffer)
+        public static ReadOnlySpan<T> AsSpan<T>(this in ReadOnlySequence<T> buffer)
         {
-            return buffer.AsMemory().Span;
-        }
-
-        private static ReadOnlyMemory<T> AsMemory<T>(this in ReadOnlySequence<T> buffer)
-        {
+            // TODO I should consider the case there is more than 1 segment
             var position = buffer.Start;
             if (buffer.TryGet(ref position, out ReadOnlyMemory<T> memory))
-                return memory;
+                return memory.Span;
 
             throw new InvalidOperationException(); // TODO exception
         }

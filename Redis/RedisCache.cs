@@ -125,7 +125,7 @@ namespace Framework.Caching.Redis
                 throw new ArgumentNullException(nameof(options));
 
             // TODO byte array for 
-            var setRequest = new Request(CommandType.HMSet, key, m_valueField, value, m_slidingExpirationField, options.SlidingExpiration.GetValueOrDefault().AsBuffer());
+            var setRequest = new Request(CommandType.HMSet, key, m_valueField, value, m_slidingExpirationField, options.SlidingExpiration.GetValueOrDefault());
             var expirationRequest = GetExpirationRequest(key, options);
             if (expirationRequest == null)
             {
@@ -158,7 +158,7 @@ namespace Framework.Caching.Redis
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            var setRequest = new Request(CommandType.HMSet, key, m_valueField, value, m_slidingExpirationField, options.SlidingExpiration.GetValueOrDefault().AsBuffer());
+            var setRequest = new Request(CommandType.HMSet, key, m_valueField, value, m_slidingExpirationField, options.SlidingExpiration.GetValueOrDefault());
             var expirationRequest = GetExpirationRequest(key, options);
             if (expirationRequest == null)
             {

@@ -14,17 +14,6 @@ namespace Framework.Caching.Redis
         private static readonly IReadOnlyDictionary<byte, string> m_replace = new Dictionary<byte, string>() { { (byte)'\r', "\\r" }, { (byte)'\n', "\\n" }, { (byte)'\t', "\\t" } };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte[] AsBuffer(this TimeSpan timeSpan)
-        {
-            var milliseconds = (long)timeSpan.TotalMilliseconds;
-            Span<byte> buffer = new byte[8];
-            if (Utf8Formatter.TryFormat(milliseconds, buffer, out int written))
-                return buffer.Slice(0, written).ToArray();
-
-            throw new InvalidOperationException(); // TODO make message
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string Format(this string format, params object[] args) => string.Format(CultureInfo.CurrentCulture, format, args);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

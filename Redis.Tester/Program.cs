@@ -17,7 +17,7 @@ namespace Framework.Caching.Redis.Tester
 
         private const string ItemKey = "Item";
         private const string DeletedKey = "Deleted";
-        private const string ItemsKey = "ItemArray";
+        private const string ItemsKey = "Items";
         private const string MissingKey = "Missing";
 
         public async static Task Main()

@@ -472,7 +472,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), request.GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), request.GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, request.GetArg<TimeSpan>(4));
         }
 
         [TestMethod]
@@ -505,7 +505,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIREAT", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -542,7 +542,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(expectedExpiration.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(expectedExpiration, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -579,7 +579,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -699,7 +699,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), request.GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, request.GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), request.GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), request.GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, request.GetArg<TimeSpan>(4));
         }
 
         [TestMethod]
@@ -733,7 +733,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIREAT", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -770,7 +770,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(expectedExpiration.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(expectedExpiration, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
@@ -807,7 +807,7 @@ namespace Framework.Caching.Redis.Tests
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("val"), requests[0].GetArg<byte[]>(1));
             CollectionAssert.AreEqual(expectedValue, requests[0].GetArg<byte[]>(2));
             CollectionAssert.AreEqual(Resp.Encoding.GetBytes("sld"), requests[0].GetArg<byte[]>(3));
-            CollectionAssert.AreEqual(TimeSpan.Zero.AsBuffer(), requests[0].GetArg<byte[]>(4));
+            Assert.AreEqual(TimeSpan.Zero, requests[0].GetArg<TimeSpan>(4));
             Assert.AreEqual("PEXPIRE", requests[1].Command);
             Assert.AreEqual(2, requests[1].GetArgs().Length);
             Assert.AreEqual(expectedKey, requests[1].GetArg<string>(0));
