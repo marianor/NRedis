@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 
 namespace Framework.Caching.Redis.Bechmarks
 {
+    [CoreJob/*, ClrJob , MonoJob, CoreRtJob*/]
     public class Benchmark
     {
         private RedisCache _cache;
-        private static readonly Random m_random = new Random();
+        private byte[] _value;
+        private int m_random;
+        private DistributedCacheEntryOptions _options;
 
-        public int KeyIndex => m_random.Next();
+        public int KeyIndex => ++m_random;
 
         [GlobalSetup]
         public void Setup()
@@ -21,22 +24,35 @@ namespace Framework.Caching.Redis.Bechmarks
                 Password = "zKkiMoQYp9qgTYvwTecq5LY0Y6b3p74uUNUwPBsQcaM="
             };
 
+            var value = new { Name = "foo", Description = "bar" };
+            _value = Serializer.Serialize(value);
+            _options = new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) };
+
             _cache = new RedisCache(options);
         }
 
         [Benchmark]
-        public async Task Set()
+        public void Set()
         {
-            var value = new TestObject { Id = KeyIndex, Name = $"Name {KeyIndex}", Description = $"Description {KeyIndex}" };
-            var serializedValue = Serializer.Serialize(value);
-            await _cache.SetAsync("Test" + KeyIndex, serializedValue, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) });
+            _cache.Set("Test" + KeyIndex + 1, _value, _options);
         }
 
         [Benchmark]
-        public async Task<TestObject> Get()
+        public byte[] Get()
         {
-            var serializedValue = await _cache.GetAsync("Test" + KeyIndex);
-            return Serializer.Deserialize<TestObject>(serializedValue);
+            return _cache.Get("Test" + KeyIndex + 1);
+        }
+
+        [Benchmark]
+        public async Task SetAsync()
+        {
+            await _cache.SetAsync("Test" + KeyIndex, _value, _options);
+        }
+
+        [Benchmark]
+        public async Task<byte[]> GetAsync()
+        {
+            return await _cache.GetAsync("Test" + KeyIndex);
         }
     }
 }

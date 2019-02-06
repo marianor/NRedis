@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +7,8 @@
     <AssemblyName>Redis.Bechmarks</AssemblyName>
     <RootNamespace>Framework.Caching.Redis.Bechmarks</RootNamespace>
     <StartupObject>Framework.Caching.Redis.Bechmarks.Program</StartupObject>
+    <TargetFrameworks>netcoreapp2.2;net47</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
