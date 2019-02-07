@@ -3,6 +3,7 @@ using Framework.Caching.Redis.Transport;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
@@ -97,7 +98,7 @@ namespace Framework.Caching.Redis.Protocol
 
         private static void VerifyAuthentication(IResponse response)
         {
-            if (!Equals(response.Value, Resp.Success))
+            if (!Resp.Success.SequenceEqual(response.GetRawValue()))
                 throw new AuthenticationException(""); // TODO make a clear message about exception
         }
     }

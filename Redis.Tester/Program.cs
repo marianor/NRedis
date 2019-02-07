@@ -53,9 +53,17 @@ namespace Framework.Caching.Redis.Tester
             try
             {
                 var caches = provider.GetServices<IDistributedCache>();
-                await DoLocalOperationsAsync(caches.First()).ConfigureAwait(false);
-                await Console.Out.WriteLineAsync().ConfigureAwait(false);
-                await DoOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
+                if (configuration.GetValue<bool>("LocalRedis:Enabled"))
+                {
+                    await DoLocalOperationsAsync(caches.First()).ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync().ConfigureAwait(false);
+                }
+
+                if (configuration.GetValue<bool>("AzureRedis:Enabled"))
+                {
+                    await DoOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync().ConfigureAwait(false);
+                }
             }
             catch (Exception e)
             {
@@ -63,7 +71,6 @@ namespace Framework.Caching.Redis.Tester
             }
             finally
             {
-                await Console.Out.WriteLineAsync("Execution finished, press any key to continue").ConfigureAwait(false);
                 Console.ReadKey();
             }
         }

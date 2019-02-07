@@ -6,7 +6,7 @@ namespace Framework.Caching.Redis.Protocol
     {
         public static readonly Encoding Encoding = Encoding.UTF8;
 
-        public const string Success = "OK";
+        public static readonly byte[] Success = Encoding.GetBytes("OK");
 
         public static readonly byte[] CRLF = Encoding.GetBytes("\r\n");
 

@@ -16,7 +16,6 @@ namespace Framework.Caching.Redis
 
         public bool UseSsl { get; set; } = true;
 
-        // TODO convert to SecureString
         public string Password { get; set; }
 
         RedisCacheOptions IOptions<RedisCacheOptions>.Value => this;
