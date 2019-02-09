@@ -30,11 +30,11 @@ namespace Framework.Caching.Redis.Tester
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            services.AddTransient<IDistributedCache, RedisCache>(s =>
+            services.AddTransient<IDistributedCache, RedisCache>(prov =>
             {
                 var options = new RedisCacheOptions();
                 configuration.GetSection("LocalRedis").Bind(options);
-                options.LoggerFactory = s.GetService<ILoggerFactory>();
+                options.LoggerFactory = prov.GetService<ILoggerFactory>();
                 return new RedisCache(options);
             });
 
@@ -49,71 +49,73 @@ namespace Framework.Caching.Redis.Tester
             var provider = services.BuildServiceProvider();
 
             var loggerFactory = provider.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger(typeof(Program));
 
             try
             {
                 var caches = provider.GetServices<IDistributedCache>();
                 if (configuration.GetValue<bool>("LocalRedis:Enabled"))
-                {
-                    await DoLocalOperationsAsync(caches.First()).ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync().ConfigureAwait(false);
-                }
+                    await DoLocalOperationsAsync(caches.First(), logger).ConfigureAwait(false);
 
                 if (configuration.GetValue<bool>("AzureRedis:Enabled"))
-                {
-                    await DoOperationsAsync(caches.ElementAt(1)).ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync().ConfigureAwait(false);
-                }
+                    await DoOperationsAsync(caches.ElementAt(1), logger).ConfigureAwait(false);
             }
             catch (Exception e)
             {
-                await Console.Out.WriteLineAsync(e.ToString()).ConfigureAwait(false);
-            }
-            finally
-            {
-                Console.ReadKey();
+                logger.LogError(e.ToString());
             }
         }
 
-        private static async Task DoLocalOperationsAsync(IDistributedCache cache)
+        private static async Task DoLocalOperationsAsync(IDistributedCache cache, ILogger logger)
         {
             using (var redisServer = new LocalRedisLauncher(Path.Combine(GetNugetFolder(), @"redis-64\3.0.503\tools")))
-                await DoOperationsAsync(cache).ConfigureAwait(false);
+                await DoOperationsAsync(cache, logger).ConfigureAwait(false);
         }
 
-        private static async Task DoOperationsAsync(IDistributedCache cache)
+        private static async Task DoOperationsAsync(IDistributedCache cache, ILogger logger)
         {
-            await SetAsync(cache, ItemKey, GetData()).ConfigureAwait(false);
-            await SetAsync(cache, ItemsKey, GetDataArray(30)).ConfigureAwait(false);
-            await SetAsync(cache, DeletedKey, GetData()).ConfigureAwait(false);
+            await cache.SetAsync(ItemKey, GetData(), logger).ConfigureAwait(false);
+            await cache.SetAsync(ItemsKey, GetDataArray(30), logger).ConfigureAwait(false);
+            await cache.SetAsync(DeletedKey, GetData(), logger).ConfigureAwait(false);
 
-            await Console.Out.WriteLineAsync($"Get for '{ItemKey}': {await GetAsync<TestObject>(cache, ItemKey).ConfigureAwait(false)}").ConfigureAwait(false);
-            await Console.Out.WriteLineAsync($"Get for '{ItemsKey}': {await GetAsync<TestObject[]>(cache, ItemsKey).ConfigureAwait(false)}").ConfigureAwait(false);
-            await Console.Out.WriteLineAsync($"Get for '{DeletedKey}': {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
-            await Console.Out.WriteLineAsync($"Get for '{MissingKey}': {await GetAsync<TestObject>(cache, MissingKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await cache.GetAsync<TestObject>(ItemKey, logger).ConfigureAwait(false);
+            await cache.GetAsync<TestObject[]>(ItemsKey, logger).ConfigureAwait(false);
+            await cache.GetAsync<TestObject>(DeletedKey, logger).ConfigureAwait(false);
+            await cache.GetAsync<TestObject>(MissingKey, logger).ConfigureAwait(false);
 
             await cache.RefreshAsync(ItemKey).ConfigureAwait(false);
             await cache.RefreshAsync(ItemsKey).ConfigureAwait(false);
 
-            await cache.RemoveAsync(DeletedKey).ConfigureAwait(false);
-            await Console.Out.WriteLineAsync($"Value '{DeletedKey}' deleted: {await GetAsync<TestObject>(cache, DeletedKey).ConfigureAwait(false)}").ConfigureAwait(false);
+            await cache.RemoveAsync(DeletedKey, logger).ConfigureAwait(false);
+            await cache.GetAsync<TestObject>(DeletedKey, logger).ConfigureAwait(false);
         }
 
-        private static async Task<string> GetAsync<T>(IDistributedCache cache, string key)
+        private static async Task<T> GetAsync<T>(this IDistributedCache cache, string key, ILogger logger)
         {
             var buffer = await cache.GetAsync(key).ConfigureAwait(false);
             var value = Serializer.Deserialize<T>(buffer);
             if (value == null)
-                return "<Missing Key>";
+            {
+                logger.LogInformation($"Get for '{key}': <Missing Key>");
+                return default;
+            }
 
             var textValue = JsonConvert.SerializeObject(value);
-            return textValue?.Substring(0, Math.Min(textValue.Length, 98));
+            logger.LogInformation($"Get for '{key}': {textValue?.Substring(0, Math.Min(textValue.Length, 97))}");
+            return value;
         }
 
-        private static async Task SetAsync(IDistributedCache cache, string key, object value)
+        private static async Task SetAsync(this IDistributedCache cache, string key, object value, ILogger logger)
         {
             var serializedValue = Serializer.Serialize(value);
             await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
+            logger.LogInformation($"Item with key '{key}' set");
+        }
+
+        private static async Task RemoveAsync(this IDistributedCache cache, string key, ILogger logger)
+        {
+            await cache.RemoveAsync(key).ConfigureAwait(false);
+            logger.LogInformation($"Item with key '{key}' removed");
         }
 
         private static string GetNugetFolder()

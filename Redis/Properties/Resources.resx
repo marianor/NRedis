@@ -120,6 +120,18 @@
   <data name="ArgumentCannotBeEmpty" xml:space="preserve">
     <value>Argument cannot be empty.</value>
   </data>
+  <data name="AuthenticationFailed" xml:space="preserve">
+    <value>Authentication failed.</value>
+  </data>
+  <data name="CannotMarshalFromTypeToType" xml:space="preserve">
+    <value>Cannot marshal '{0}' to '{1}'.</value>
+  </data>
+  <data name="CannotReadFromPipe" xml:space="preserve">
+    <value>Cannot read from Pipe. State if the reader, IsCanceled: '{0}', IsCompleted: '{1}'.</value>
+  </data>
+  <data name="InvalidFormatOnType" xml:space="preserve">
+    <value>Invalid number format for '{0}'.</value>
+  </data>
   <data name="ProtocolViolationInvalidBeginChar" xml:space="preserve">
     <value>Invalid character detected at the begin of the data, near position '{0}'.</value>
   </data>

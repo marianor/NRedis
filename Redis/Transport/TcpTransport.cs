@@ -5,7 +5,6 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -99,13 +98,7 @@ namespace Framework.Caching.Redis.Transport
             var pipe = new Pipe();
             var writer = pipe.Writer;
 
-            bool hasMoreData;
-            do
-            {
-                hasMoreData = ReadChunk(writer);
-            }
-            while (hasMoreData);
-
+            while (ReadChunk(writer)) ;
             writer.Complete();
 
             if (!pipe.Reader.TryRead(out ReadResult result))
@@ -120,13 +113,7 @@ namespace Framework.Caching.Redis.Transport
             var pipe = new Pipe();
             var writer = pipe.Writer;
 
-            bool hasMoreData;
-            do
-            {
-                hasMoreData = await ReadChunkAsync(writer, token).ConfigureAwait(false);
-            }
-            while (hasMoreData);
-
+            while (await ReadChunkAsync(writer, token).ConfigureAwait(false)) ;
             writer.Complete();
 
             var result = await pipe.Reader.ReadAsync(token).ConfigureAwait(false);
@@ -174,24 +161,4 @@ namespace Framework.Caching.Redis.Transport
             }
         }
     }
-
-    //internal static class X
-    //{
-    //    [Obsolete("Move to other file")]
-    //    public static void Write(this Stream stream, ReadOnlySequence<byte> buffer)
-    //    {
-    //        buffer.AsSpan().ToArray()
-    //        foreach (var y in buffer)
-    //            stream.Write(y.Span.ToArray(), 0, y.Span.Length);
-    //        stream.Flush();
-    //    }
-
-    //    [Obsolete("Move to other file")]
-    //    public static async Task WriteAsync(this Stream stream, ReadOnlySequence<byte> buffer, CancellationToken token)
-    //    {
-    //        foreach (var y in buffer)
-    //            await stream.WriteAsync(y.Span.ToArray(), 0, y.Span.Length, token).ConfigureAwait(false);
-    //        await stream.FlushAsync(token).ConfigureAwait(false);
-    //    }
-    //}
 }

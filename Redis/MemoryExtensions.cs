@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Framework.Caching.Redis.Properties;
+using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
@@ -8,8 +9,15 @@ namespace Framework.Caching.Redis
     {
         public static ArraySegment<T> AsSegment<T>(this in Memory<T> memory)
         {
-            ReadOnlyMemory<T> readOnlyMemory = memory;
-            return readOnlyMemory.AsSegment();
+            try
+            {
+                ReadOnlyMemory<T> readOnlyMemory = memory;
+                return readOnlyMemory.AsSegment();
+            }
+            catch (InvalidCastException)
+            {
+                throw new InvalidCastException(Resources.CannotMarshalFromTypeToType.Format(typeof(Memory<T>), typeof(ArraySegment<T>)));
+            }
         }
 
         public static ArraySegment<T> AsSegment<T>(this in ReadOnlyMemory<T> memory)
@@ -17,7 +25,7 @@ namespace Framework.Caching.Redis
             if (MemoryMarshal.TryGetArray(memory, out ArraySegment<T> segment))
                 return segment;
 
-            throw new InvalidOperationException(); // TDOO ecceptions
+            throw new InvalidCastException(Resources.CannotMarshalFromTypeToType.Format(typeof(ReadOnlyMemory<T>), typeof(ArraySegment<T>)));
         }
 
         public static ReadOnlySpan<T> AsSpan<T>(this in ReadOnlySequence<T> buffer)
@@ -27,7 +35,7 @@ namespace Framework.Caching.Redis
             if (buffer.TryGet(ref position, out ReadOnlyMemory<T> memory))
                 return memory.Span;
 
-            throw new InvalidOperationException(); // TODO exception
+            throw new InvalidCastException(Resources.CannotMarshalFromTypeToType.Format(typeof(ReadOnlySequence<T>), typeof(ReadOnlySpan<T>)));
         }
     }
 }

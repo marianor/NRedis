@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,9 +14,9 @@ namespace Framework.Caching.Redis
 {
     public class RedisCache : IDistributedCache
     {
-        private static readonly byte[] m_valueField = Resp.Encoding.GetBytes("val");
-        private static readonly byte[] m_slidingExpirationField = Resp.Encoding.GetBytes("sld");
-        private static readonly byte[] m_refreshScript = Resp.Encoding.GetBytes("local sliding = tonumber(redis.call('HGET',KEYS[1],ARGV[1])) if sliding > 0 then redis.call('PEXPIRE',KEYS[1],sliding) end");
+        private static readonly byte[] m_valueField = Encoding.UTF8.GetBytes("val");
+        private static readonly byte[] m_slidingExpirationField = Encoding.UTF8.GetBytes("sld");
+        private static readonly byte[] m_refreshScript = Encoding.UTF8.GetBytes("local sliding = tonumber(redis.call('HGET',KEYS[1],ARGV[1])) if sliding > 0 then redis.call('PEXPIRE',KEYS[1],sliding) end");
 
         private readonly IRespClient _respClient;
 
@@ -124,7 +125,6 @@ namespace Framework.Caching.Redis
             if (options == null)
                 throw new ArgumentNullException(nameof(options));
 
-            // TODO byte array for 
             var setRequest = new Request(CommandType.HMSet, key, m_valueField, value, m_slidingExpirationField, options.SlidingExpiration.GetValueOrDefault());
             var expirationRequest = GetExpirationRequest(key, options);
             if (expirationRequest == null)

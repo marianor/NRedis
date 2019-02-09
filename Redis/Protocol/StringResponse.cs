@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Framework.Caching.Redis.Protocol
 {
@@ -11,7 +12,7 @@ namespace Framework.Caching.Redis.Protocol
         {
             DataType = valueType;
             _rawValue = rawValue;
-            _value = new Lazy<string>(() => _rawValue == null ? null : Resp.Encoding.GetString(_rawValue));
+            _value = new Lazy<string>(() => _rawValue == null ? null : Encoding.UTF8.GetString(_rawValue));
         }
 
         public DataType DataType { get; }

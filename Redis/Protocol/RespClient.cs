@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace Framework.Caching.Redis.Protocol
 
         private void Connect()
         {
+            // TODO need to ensure one execution
             if (_transport.State == TransportState.Closed)
             {
                 _transport.Connect();
@@ -37,6 +39,7 @@ namespace Framework.Caching.Redis.Protocol
 
         private async Task ConnectAsync(CancellationToken token)
         {
+            // TODO need to ensure one execution
             if (_transport.State == TransportState.Closed)
             {
                 await _transport.ConnectAsync(token).ConfigureAwait(false);
@@ -96,10 +99,14 @@ namespace Framework.Caching.Redis.Protocol
             return output.Parse(requests.Length);
         }
 
-        private static void VerifyAuthentication(IResponse response)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void VerifyAuthentication(IResponse response)
         {
             if (!Resp.Success.SequenceEqual(response.GetRawValue()))
-                throw new AuthenticationException(""); // TODO make a clear message about exception
+            {
+                _transport.Logger.LogError($"Authentication failed: {response.Value}");
+                throw new AuthenticationException(Resources.AuthenticationFailed);
+            }
         }
     }
 }

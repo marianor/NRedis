@@ -19,13 +19,12 @@ namespace Framework.Caching.Redis.Protocol
             return response;
         }
 
-        // TODO Consider Memory<byte>
         public static IResponse[] Parse(this in ReadOnlySequence<byte> buffer, in int count)
         {
             var i = 0;
             var position = 0;
             var responses = new IResponse[count];
-            while (buffer.Length > position)
+            while (buffer.Length > position && i < count)
                 responses[i++] = buffer.ParseElement(ref position);
 
             if (position < buffer.Length)
@@ -72,7 +71,7 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
             position += length + 2;
-            return span.Slice(0, length).ToArray(); // TODO MemoryMarshal
+            return span.Slice(0, length).ToArray(); 
         }
 
         private static byte[] ParseInteger(this in ReadOnlySequence<byte> buffer, ref int position)

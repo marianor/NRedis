@@ -70,6 +70,42 @@ namespace Framework.Caching.Redis.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Authentication failed..
+        /// </summary>
+        internal static string AuthenticationFailed {
+            get {
+                return ResourceManager.GetString("AuthenticationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot marshal &apos;{0}&apos; to &apos;{1}&apos;..
+        /// </summary>
+        internal static string CannotMarshalFromTypeToType {
+            get {
+                return ResourceManager.GetString("CannotMarshalFromTypeToType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot read from Pipe. State if the reader, IsCanceled: &apos;{0}&apos;, IsCompleted: &apos;{1}&apos;..
+        /// </summary>
+        internal static string CannotReadFromPipe {
+            get {
+                return ResourceManager.GetString("CannotReadFromPipe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid number format for &apos;{0}&apos;..
+        /// </summary>
+        internal static string InvalidFormatOnType {
+            get {
+                return ResourceManager.GetString("InvalidFormatOnType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid character detected at the begin of the data, near position &apos;{0}&apos;..
         /// </summary>
         internal static string ProtocolViolationInvalidBeginChar {

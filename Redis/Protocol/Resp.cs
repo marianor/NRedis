@@ -4,11 +4,9 @@ namespace Framework.Caching.Redis.Protocol
 {
     internal class Resp
     {
-        public static readonly Encoding Encoding = Encoding.UTF8;
+        public static readonly byte[] Success = Encoding.UTF8.GetBytes("OK");
 
-        public static readonly byte[] Success = Encoding.GetBytes("OK");
-
-        public static readonly byte[] CRLF = Encoding.GetBytes("\r\n");
+        public static readonly byte[] CRLF = Encoding.UTF8.GetBytes("\r\n");
 
         public const byte SimpleString = (byte)'+';
 
