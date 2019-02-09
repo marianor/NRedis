@@ -38,7 +38,7 @@ namespace Framework.Caching.Redis.Protocol
             }
 
             if (i != count)
-                throw new ProtocolViolationException("Invalid responses"); // TODO check messages
+                throw new ProtocolViolationException(Resources.InvalidResponsesCount.Format(i, count));
 
             return responses;
         }
@@ -71,7 +71,7 @@ namespace Framework.Caching.Redis.Protocol
                 throw new ProtocolViolationException(Resources.ProtocolViolationInvalidEndChar.Format(position));
 
             position += length + 2;
-            return span.Slice(0, length).ToArray(); 
+            return span.Slice(0, length).ToArray();
         }
 
         private static byte[] ParseInteger(this in ReadOnlySequence<byte> buffer, ref int position)

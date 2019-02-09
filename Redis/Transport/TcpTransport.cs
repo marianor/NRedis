@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Framework.Caching.Redis.Properties;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
 using System.IO;
@@ -14,7 +15,7 @@ namespace Framework.Caching.Redis.Transport
     {
         private TcpClient _client;
         private Stream _stream;
-
+        
         public TcpTransport(string host, int port)
         {
             Host = host ?? throw new ArgumentNullException(nameof(host));
@@ -96,28 +97,29 @@ namespace Framework.Caching.Redis.Transport
         private ReadOnlySequence<byte> ReadResponse()
         {
             var pipe = new Pipe();
-            var writer = pipe.Writer;
 
+            var writer = pipe.Writer;
             while (ReadChunk(writer)) ;
             writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
-                throw new InvalidOperationException(); // TODO exception
-
-            pipe.Reader.Complete();
+            var reader = pipe.Reader;
+            if (!reader.TryRead(out ReadResult result))
+                throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
+            reader.Complete();
             return result.Buffer;
         }
 
         private async Task<ReadOnlySequence<byte>> ReadResponseAsync(CancellationToken token)
         {
             var pipe = new Pipe();
-            var writer = pipe.Writer;
 
+            var writer = pipe.Writer;
             while (await ReadChunkAsync(writer, token).ConfigureAwait(false)) ;
             writer.Complete();
 
-            var result = await pipe.Reader.ReadAsync(token).ConfigureAwait(false);
-            pipe.Reader.Complete();
+            var reader = pipe.Reader;
+            var result = await reader.ReadAsync(token).ConfigureAwait(false);
+            reader.Complete();
             return result.Buffer;
         }
 

@@ -16,24 +16,30 @@ namespace Framework.Caching.Redis.Protocol
         public static ReadOnlySequence<byte> Format(this IRequest request)
         {
             var pipe = new Pipe();
-            request.WriteCommandRequest(pipe.Writer);
-            pipe.Writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
+            var writer = pipe.Writer;
+            request.WriteCommandRequest(writer);
+            writer.Complete();
+
+            var reader = pipe.Reader;
+            if (!reader.TryRead(out ReadResult result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            pipe.Reader.Complete();
+            reader.Complete();
             return result.Buffer;
         }
 
         public static ReadOnlySequence<byte> Format(this IRequest[] requests)
         {
             var pipe = new Pipe();
-            requests.WriteCommndsRequest(pipe.Writer);
-            pipe.Writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
+            var writer = pipe.Writer;
+            requests.WriteCommndsRequest(writer);
+            writer.Complete();
+
+            var reader = pipe.Reader;
+            if (!reader.TryRead(out ReadResult result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            pipe.Reader.Complete();
+            reader.Complete();
             return result.Buffer;
         }
 

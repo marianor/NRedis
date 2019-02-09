@@ -106,6 +106,15 @@ namespace Framework.Caching.Redis.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The count of responses (&apos;{0}&apos;) do not match with the count of requests (&apos;{1}&apos;)..
+        /// </summary>
+        internal static string InvalidResponsesCount {
+            get {
+                return ResourceManager.GetString("InvalidResponsesCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid character detected at the begin of the data, near position &apos;{0}&apos;..
         /// </summary>
         internal static string ProtocolViolationInvalidBeginChar {

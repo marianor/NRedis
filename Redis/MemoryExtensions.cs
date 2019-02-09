@@ -30,7 +30,7 @@ namespace Framework.Caching.Redis
 
         public static ReadOnlySpan<T> AsSpan<T>(this in ReadOnlySequence<T> buffer)
         {
-            // TODO I should consider the case there is more than 1 segment
+            // TODO I should consider the case there is more than 1 segment ??
             var position = buffer.Start;
             if (buffer.TryGet(ref position, out ReadOnlyMemory<T> memory))
                 return memory.Span;

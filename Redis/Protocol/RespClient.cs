@@ -13,6 +13,7 @@ namespace Framework.Caching.Redis.Protocol
 {
     public class RespClient : IRespClient
     {
+        private static readonly SemaphoreSlim m_mutex = new SemaphoreSlim(1, 1);
         private readonly RedisCacheOptions _optionsAccessor;
         private readonly ITransport _transport;
 
@@ -25,28 +26,48 @@ namespace Framework.Caching.Redis.Protocol
 
         private void Connect()
         {
-            // TODO need to ensure one execution
             if (_transport.State == TransportState.Closed)
             {
-                _transport.Connect();
-                if (_optionsAccessor.Password != null)
+                m_mutex.Wait();
+                try
                 {
-                    var response = Execute(new Request(CommandType.Auth, _optionsAccessor.Password));
-                    VerifyAuthentication(response);
+                    if (_transport.State == TransportState.Closed)
+                    {
+                        _transport.Connect();
+                        if (_optionsAccessor.Password != null)
+                        {
+                            var response = Execute(new Request(CommandType.Auth, _optionsAccessor.Password));
+                            VerifyAuthentication(response);
+                        }
+                    }
+                }
+                finally
+                {
+                    m_mutex.Release();
                 }
             }
         }
 
         private async Task ConnectAsync(CancellationToken token)
         {
-            // TODO need to ensure one execution
             if (_transport.State == TransportState.Closed)
             {
-                await _transport.ConnectAsync(token).ConfigureAwait(false);
-                if (_optionsAccessor.Password != null)
+                await m_mutex.WaitAsync().ConfigureAwait(false);
+                try
                 {
-                    var response = await ExecuteAsync(new Request(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
-                    VerifyAuthentication(response);
+                    if (_transport.State == TransportState.Closed)
+                    {
+                        await _transport.ConnectAsync(token).ConfigureAwait(false);
+                        if (_optionsAccessor.Password != null)
+                        {
+                            var response = await ExecuteAsync(new Request(CommandType.Auth, _optionsAccessor.Password), token).ConfigureAwait(false);
+                            VerifyAuthentication(response);
+                        }
+                    }
+                }
+                finally
+                {
+                    m_mutex.Release();
                 }
             }
         }

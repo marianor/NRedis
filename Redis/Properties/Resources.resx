@@ -132,6 +132,9 @@
   <data name="InvalidFormatOnType" xml:space="preserve">
     <value>Invalid number format for '{0}'.</value>
   </data>
+  <data name="InvalidResponsesCount" xml:space="preserve">
+    <value>The count of responses ('{0}') do not match with the count of requests ('{1}').</value>
+  </data>
   <data name="ProtocolViolationInvalidBeginChar" xml:space="preserve">
     <value>Invalid character detected at the begin of the data, near position '{0}'.</value>
   </data>
