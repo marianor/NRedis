@@ -13,6 +13,8 @@ namespace Framework.Caching.Redis.Transport
 {
     public class TcpTransport : ITransport, IDisposable
     {
+        private const int DefaultTimeout = 30000;
+
         private TcpClient _client;
         private Stream _stream;
         
@@ -34,7 +36,7 @@ namespace Framework.Caching.Redis.Transport
 
         public void Connect()
         {
-            _client = new TcpClient();
+            _client = new TcpClient { SendTimeout = DefaultTimeout, ReceiveTimeout = DefaultTimeout };
             _client.Connect(Host, Port);
             _stream = GetStream(_client);
             State = TransportState.Connected;
@@ -42,7 +44,7 @@ namespace Framework.Caching.Redis.Transport
 
         public async Task ConnectAsync(CancellationToken token = default)
         {
-            _client = new TcpClient();
+            _client = new TcpClient { SendTimeout = DefaultTimeout, ReceiveTimeout = DefaultTimeout };
             await _client.ConnectAsync(Host, Port).ConfigureAwait(false);
             _stream = await GetStreamAsync(_client).ConfigureAwait(false);
             State = TransportState.Connected;
@@ -98,14 +100,12 @@ namespace Framework.Caching.Redis.Transport
         {
             var pipe = new Pipe();
 
-            var writer = pipe.Writer;
-            while (ReadChunk(writer)) ;
-            writer.Complete();
+            while (ReadChunk(pipe.Writer)) ;
+            pipe.Writer.Complete();
 
-            var reader = pipe.Reader;
-            if (!reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out ReadResult result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            reader.Complete();
+            pipe.Reader.Complete();
             return result.Buffer;
         }
 
@@ -113,13 +113,11 @@ namespace Framework.Caching.Redis.Transport
         {
             var pipe = new Pipe();
 
-            var writer = pipe.Writer;
-            while (await ReadChunkAsync(writer, token).ConfigureAwait(false)) ;
-            writer.Complete();
+            while (await ReadChunkAsync(pipe.Writer, token).ConfigureAwait(false)) ;
+            pipe.Writer.Complete();
 
-            var reader = pipe.Reader;
-            var result = await reader.ReadAsync(token).ConfigureAwait(false);
-            reader.Complete();
+            var result = await pipe.Reader.ReadAsync(token).ConfigureAwait(false);
+            pipe.Reader.Complete();
             return result.Buffer;
         }
 

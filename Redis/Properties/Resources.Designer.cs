@@ -97,6 +97,15 @@ namespace Framework.Caching.Redis.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type &apos;{0}&apos; not supported in conversion..
+        /// </summary>
+        internal static string FormatterTypeNotSupported {
+            get {
+                return ResourceManager.GetString("FormatterTypeNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid number format for &apos;{0}&apos;..
         /// </summary>
         internal static string InvalidFormatOnType {

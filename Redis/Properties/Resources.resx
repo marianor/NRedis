@@ -129,6 +129,9 @@
   <data name="CannotReadFromPipe" xml:space="preserve">
     <value>Cannot read from Pipe. State if the reader, IsCanceled: '{0}', IsCompleted: '{1}'.</value>
   </data>
+  <data name="FormatterTypeNotSupported" xml:space="preserve">
+    <value>Type '{0}' not supported in conversion.</value>
+  </data>
   <data name="InvalidFormatOnType" xml:space="preserve">
     <value>Invalid number format for '{0}'.</value>
   </data>

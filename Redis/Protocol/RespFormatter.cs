@@ -17,14 +17,12 @@ namespace Framework.Caching.Redis.Protocol
         {
             var pipe = new Pipe();
 
-            var writer = pipe.Writer;
-            request.WriteCommandRequest(writer);
-            writer.Complete();
+            request.WriteCommandRequest(pipe.Writer);
+            pipe.Writer.Complete();
 
-            var reader = pipe.Reader;
-            if (!reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out ReadResult result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            reader.Complete();
+            pipe.Reader.Complete();
             return result.Buffer;
         }
 
@@ -32,14 +30,12 @@ namespace Framework.Caching.Redis.Protocol
         {
             var pipe = new Pipe();
 
-            var writer = pipe.Writer;
-            requests.WriteCommndsRequest(writer);
-            writer.Complete();
+            requests.WriteCommndsRequest(pipe.Writer);
+            pipe.Writer.Complete();
 
-            var reader = pipe.Reader;
-            if (!reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out ReadResult result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            reader.Complete();
+            pipe.Reader.Complete();
             return result.Buffer;
         }
 
@@ -128,7 +124,7 @@ namespace Framework.Caching.Redis.Protocol
                 else if (arg is long longArg)
                     writer.WriteBulkString(FromInt64(longArg));
                 else
-                    throw new InvalidOperationException(); // TODO exception
+                    throw new FormatException(Resources.FormatterTypeNotSupported.Format(arg.GetType()));
             }
         }
 
