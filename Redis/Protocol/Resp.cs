@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     internal class Resp
     {

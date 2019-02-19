@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     public class StringResponse : IResponse
     {

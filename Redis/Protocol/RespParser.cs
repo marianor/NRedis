@@ -1,11 +1,11 @@
-﻿using Framework.Caching.Redis.Properties;
+﻿using NRedis.Properties;
 using System;
 using System.Buffers;
 using System.Buffers.Text;
 using System.Linq;
 using System.Net;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     internal static class RespParser
     {

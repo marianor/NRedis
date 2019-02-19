@@ -10,8 +10,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Framework.Caching.Redis.Tests</AssemblyName>
-    <RootNamespace>Framework.Caching.Redis.Tests</RootNamespace>
+    <AssemblyName>NRedis.Tests</AssemblyName>
+    <RootNamespace>NRedis.Tests</RootNamespace>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
 
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Redis\Redis.csproj" />
+    <ProjectReference Include="..\Redis\NRedis.csproj" />
   </ItemGroup>
 
 </Project>

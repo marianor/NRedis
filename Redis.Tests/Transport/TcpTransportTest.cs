@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace Framework.Caching.Redis.Transport.Tests
+namespace NRedis.Transport.Tests
 {
     [TestClass]
     public class TcpTransportTest

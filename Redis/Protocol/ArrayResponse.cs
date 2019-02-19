@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     public class ArrayResponse : IResponse
     {

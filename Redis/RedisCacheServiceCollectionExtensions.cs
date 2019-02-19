@@ -1,10 +1,10 @@
-﻿using Framework.Caching.Redis;
+﻿using NRedis;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
-namespace Framework.DependencyInjection
+namespace NRedis.DependencyInjection
 {
     public static class RedisCacheServiceCollectionExtensions
     {

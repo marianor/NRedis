@@ -1,5 +1,5 @@
-﻿using Framework.Caching.Redis.Properties;
-using Framework.Caching.Redis.Protocol;
+﻿using NRedis.Properties;
+using NRedis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using System;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis
+namespace NRedis
 {
     public class RedisCache : IDistributedCache
     {

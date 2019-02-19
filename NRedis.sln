@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28606.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis", "Redis\Redis.csproj", "{3882AD58-485F-4EC4-8C5B-EAFCEB73C074}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedis", "Redis\NRedis.csproj", "{3882AD58-485F-4EC4-8C5B-EAFCEB73C074}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tests", "Redis.Tests\Redis.Tests.csproj", "{F208380F-ED82-4F61-9EB4-AC5EFA601C0E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedis.Tests", "Redis.Tests\NRedis.Tests.csproj", "{F208380F-ED82-4F61-9EB4-AC5EFA601C0E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Redis.Tester", "Redis.Tester\Redis.Tester.csproj", "{86041D0E-7273-4FD5-8722-FF8E07AF4C3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedis.Tester", "Redis.Tester\NRedis.Tester.csproj", "{86041D0E-7273-4FD5-8722-FF8E07AF4C3D}"
 EndProject
-Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "Redis.Resources", "Redis.Resources\Redis.Resources.deployproj", "{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}"
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "NRedis.Resources", "Redis.Resources\NRedis.Resources.deployproj", "{998F7DBA-AD54-4B47-80AC-E61C2C6E144F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Redis.Bechmarks", "Redis.Bechmarks\Redis.Bechmarks.csproj", "{8008FEC5-2231-452C-99D9-7EE6A138C89A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedis.Bechmarks", "Redis.Bechmarks\NRedis.Bechmarks.csproj", "{8008FEC5-2231-452C-99D9-7EE6A138C89A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -4,9 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <LangVersion>7.3</LangVersion>
-    <AssemblyName>Redis.Bechmarks</AssemblyName>
-    <RootNamespace>Framework.Caching.Redis.Bechmarks</RootNamespace>
-    <StartupObject>Framework.Caching.Redis.Bechmarks.Program</StartupObject>
+    <AssemblyName>NRedis.Bechmarks</AssemblyName>
+    <RootNamespace>NRedis.Bechmarks</RootNamespace>
+    <StartupObject>NRedis.Bechmarks.Program</StartupObject>
     <TargetFrameworks>netcoreapp2.2;net47</TargetFrameworks>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
@@ -17,14 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Redis\Redis.csproj" />
+    <ProjectReference Include="..\Redis\NRedis.csproj" />
   </ItemGroup>
 
   <ItemGroup>

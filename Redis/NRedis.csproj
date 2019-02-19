@@ -9,8 +9,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>Framework.Caching.Redis</RootNamespace>
-    <AssemblyName>Framework.Caching.Redis</AssemblyName>
+    <RootNamespace>NRedis</RootNamespace>
+    <AssemblyName>NRedis</AssemblyName>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Authors>Mariano Omar Rodriguez</Authors>
     <Company>(None)</Company>
@@ -40,7 +40,7 @@
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>Framework.Caching.Redis.Tests</_Parameter1>
+      <_Parameter1>NRedis.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

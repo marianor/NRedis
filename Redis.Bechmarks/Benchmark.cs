@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Bechmarks
+namespace NRedis.Bechmarks
 {
     [CoreJob]
     //[ClrJob] // , MonoJob, CoreRtJob

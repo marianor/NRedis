@@ -1,6 +1,6 @@
 ﻿using BenchmarkDotNet.Running;
 
-namespace Framework.Caching.Redis.Bechmarks
+namespace NRedis.Bechmarks
 {
     public class Program
     {

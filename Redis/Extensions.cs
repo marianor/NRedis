@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Framework.Caching.Redis
+namespace NRedis
 {
     internal static class Extensions
     {

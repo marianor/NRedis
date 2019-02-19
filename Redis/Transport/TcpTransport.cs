@@ -1,4 +1,4 @@
-﻿using Framework.Caching.Redis.Properties;
+﻿using NRedis.Properties;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Transport
+namespace NRedis.Transport
 {
     public class TcpTransport : ITransport, IDisposable
     {

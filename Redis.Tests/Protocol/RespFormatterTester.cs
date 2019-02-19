@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Protocol.Tests
+namespace NRedis.Protocol.Tests
 {
     [TestClass]
     public class RespFormatterTester

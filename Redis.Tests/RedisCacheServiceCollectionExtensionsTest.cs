@@ -1,4 +1,4 @@
-﻿using Framework.DependencyInjection;
+﻿using NRedis.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Framework.Caching.Redis.Tests
+namespace NRedis.Tests
 {
     [TestClass]
     public class RedisCacheServiceCollectionExtensionsTest

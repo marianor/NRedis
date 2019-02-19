@@ -1,4 +1,4 @@
-﻿using Framework.Caching.Redis.Transport;
+﻿using NRedis.Transport;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -7,7 +7,7 @@ using System.Buffers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Protocol.Tests
+namespace NRedis.Protocol.Tests
 {
     [TestClass]
     public class RespClientTest

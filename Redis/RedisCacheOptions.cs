@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Framework.Caching.Redis
+namespace NRedis
 {
     /// <summary>
     /// Configuration options for <see cref="RedisCache" />.

@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Tester
+namespace NRedis.Tester
 {
     public static class Program
     {

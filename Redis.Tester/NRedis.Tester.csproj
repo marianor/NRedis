@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup Label="Globals">
     <SccProjectName>SAK</SccProjectName>
@@ -11,8 +11,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <LangVersion>7.3</LangVersion>
-    <AssemblyName>Framework.Caching.Redis.Tester</AssemblyName>
-    <RootNamespace>Framework.Caching.Redis.Tester</RootNamespace>
+    <AssemblyName>NRedis.Tester</AssemblyName>
+    <RootNamespace>NRedis.Tester</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Redis\Redis.csproj" />
+    <ProjectReference Include="..\Redis\NRedis.csproj" />
   </ItemGroup>
 
   <ItemGroup>

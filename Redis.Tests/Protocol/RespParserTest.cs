@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Net;
 using System.Text;
 
-namespace Framework.Caching.Redis.Protocol.Tests
+namespace NRedis.Protocol.Tests
 {
     [TestClass]
     public class RespParserTest

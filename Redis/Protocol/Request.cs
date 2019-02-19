@@ -1,7 +1,7 @@
-﻿using Framework.Caching.Redis.Properties;
+﻿using NRedis.Properties;
 using System;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     public class Request : IRequest
     {

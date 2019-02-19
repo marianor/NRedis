@@ -1,4 +1,4 @@
-﻿namespace Framework.Caching.Redis.Protocol
+﻿namespace NRedis.Protocol
 {
     public interface IRequest
     {

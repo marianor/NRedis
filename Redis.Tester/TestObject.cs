@@ -1,4 +1,4 @@
-﻿namespace Framework.Caching.Redis
+﻿namespace NRedis
 {
     public class TestObject
     {

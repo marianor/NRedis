@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Transport
+namespace NRedis.Transport
 {
     public interface ITransport
     {

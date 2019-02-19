@@ -1,9 +1,9 @@
-﻿using Framework.Caching.Redis.Properties;
+﻿using NRedis.Properties;
 using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
-namespace Framework.Caching.Redis
+namespace NRedis
 {
     internal static class MemoryExtensions
     {

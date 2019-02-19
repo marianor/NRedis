@@ -1,4 +1,4 @@
-﻿using Framework.Caching.Redis.Protocol;
+﻿using NRedis.Protocol;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -8,7 +8,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Tests
+namespace NRedis.Tests
 {
     [TestClass]
     public class RedisCacheTest

@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     public interface IRespClient
     {

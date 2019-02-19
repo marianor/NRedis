@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace Framework.Caching.Redis.Protocol.Tests
+namespace NRedis.Protocol.Tests
 {
     [TestClass]
     public class RequestTest

@@ -1,5 +1,5 @@
-﻿using Framework.Caching.Redis.Properties;
-using Framework.Caching.Redis.Transport;
+﻿using NRedis.Properties;
+using NRedis.Transport;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -9,7 +9,7 @@ using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Framework.Caching.Redis.Protocol
+namespace NRedis.Protocol
 {
     public class RespClient : IRespClient
     {
