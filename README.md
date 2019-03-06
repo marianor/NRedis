@@ -1,5 +1,5 @@
 # Introduction 
-A simple Redis Client to support .NET projects. It is written as .NET Standard 2.0.
+A simple Redis Client supporting .NET projects. It is written as .NET Standard 2.0.
 
 # Getting Started
 TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
