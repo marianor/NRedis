@@ -31,11 +31,7 @@ namespace NRedis.Protocol
                 throw new ProtocolViolationException(Resources.ProtocolViolationNotExpectedData.Format(position));
 
             if (i < count && responses[i - 1].DataType == DataType.Error)
-            {
-                var result = new IResponse[i];
-                responses.CopyTo(result, 0);
-                return result;
-            }
+                return new ReadOnlySpan<IResponse>(responses, 0, i).ToArray();
 
             if (i != count)
                 throw new ProtocolViolationException(Resources.InvalidResponsesCount.Format(i, count));
