@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-2019'
 
 variables:
-  apiKey: 'oy2ixjfzqk64v52t22kairw2f5p2y6sefk7pdtqpkw5axi'
+  nugetConnection: 'Nuget.org'
   buildConfiguration: 'Release'
 
 steps:
@@ -40,6 +40,6 @@ steps:
   inputs:
     command: push
     nuGetFeedType: external
-    packagesToPush: '$(build.artifactStagingDirectory)/*.nupkg'
-    publishFeedCredentials: $(apiKey)
+    packagesToPush: '$(build.artifactStagingDirectory)\**\*.nupkg'
+    publishFeedCredentials: $(nugetConnection)
 - task: PublishBuildArtifacts@1
