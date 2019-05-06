@@ -1,8 +1,7 @@
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
-  nugetConnection: 'Nuget.org'
   buildConfiguration: 'Release'
 
 steps:
@@ -25,30 +24,8 @@ steps:
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
-# - task: DotNetCoreCLI@2
-#   displayName: Pack
-#   inputs:
-#     command: pack
-#     packagesToPack: '**/Redis/NRedis.csproj'
-
-# - task: DotNetCoreCLI@2
-#   displayName: Push
-#   inputs:
-#     command: push
-#     nuGetFeedType: external
-#     packagesToPush: '$(build.artifactStagingDirectory)\**\*.nupkg'
-#     publishFeedCredentials: $(nugetConnection)
-
-# - task: DotNetCoreCLI@2
-#   displayName: Publish
-#   inputs:
-#     command: publish
-#     publishWebProjects: True
-#     arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
-#     zipAfterPublish: True
-
-# - task: PublishBuildArtifacts@1
-#   displayName: 'Publish Artifact'
-#   inputs:
-#     PathtoPublish: '$(build.artifactstagingdirectory)'
-#   condition: succeededOrFailed()
+- task: DotNetCoreCLI@2
+  displayName: Pack
+  inputs:
+    command: pack
+    packagesToPack: '**/Redis/NRedis.csproj'

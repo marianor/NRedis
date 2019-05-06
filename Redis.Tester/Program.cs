@@ -51,19 +51,12 @@ namespace NRedis.Tester
             var loggerFactory = provider.GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger(typeof(Program));
 
-            try
-            {
-                var caches = provider.GetServices<IDistributedCache>();
-                if (configuration.GetValue<bool>("LocalRedis:Enabled"))
-                    await DoLocalOperationsAsync(caches.First(), logger).ConfigureAwait(false);
+            var caches = provider.GetServices<IDistributedCache>();
+            if (configuration.GetValue<bool>("LocalRedis:Enabled"))
+                await DoLocalOperationsAsync(caches.First(), logger).ConfigureAwait(false);
 
-                if (configuration.GetValue<bool>("AzureRedis:Enabled"))
-                    await DoOperationsAsync(caches.ElementAt(1), logger).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e.ToString());
-            }
+            if (configuration.GetValue<bool>("AzureRedis:Enabled"))
+                await DoOperationsAsync(caches.ElementAt(1), logger).ConfigureAwait(false);
         }
 
         private static async Task DoLocalOperationsAsync(IDistributedCache cache, ILogger logger)
