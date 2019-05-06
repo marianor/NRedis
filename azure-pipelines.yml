@@ -1,5 +1,5 @@
 pool:
-  name: Hosted Ubuntu 1604
+  vmImage: 'ubuntu-latest'
 
 variables:
   nugetConnection: 'Nuget.org'
