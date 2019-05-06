@@ -30,16 +30,16 @@ steps:
     command: test
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
-- task: DotNetCoreCLI@2
-  displayName: Pack
-  inputs:
-    command: pack
-    packagesToPack: '**/Redis/NRedis.csproj'
-- task: DotNetCoreCLI@2
-  displayName: Push
-  inputs:
-    command: push
-    nuGetFeedType: external
-    packagesToPush: '$(build.artifactStagingDirectory)\**\*.nupkg'
-    publishFeedCredentials: $(nugetConnection)
-- task: PublishBuildArtifacts@1
+# - task: DotNetCoreCLI@2
+#   displayName: Pack
+#   inputs:
+#     command: pack
+#     packagesToPack: '**/Redis/NRedis.csproj'
+# - task: DotNetCoreCLI@2
+#   displayName: Push
+#   inputs:
+#     command: push
+#     nuGetFeedType: external
+#     packagesToPush: '$(build.artifactStagingDirectory)\**\*.nupkg'
+#     publishFeedCredentials: $(nugetConnection)
+# - task: PublishBuildArtifacts@1
