@@ -1,5 +1,5 @@
 pool:
-  vmImage: 'Hosted Ubuntu 1604'
+  name: Hosted Ubuntu 1604
 
 variables:
   nugetConnection: 'Nuget.org'
@@ -11,22 +11,26 @@ steps:
   inputs:
     command: restore
     projects: '**/*.csproj'
+
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
     projects: '**/*.csproj'
     arguments: '--configuration $(BuildConfiguration)'
+
 - task: DotNetCoreCLI@2
   displayName: Test
   inputs:
     command: test
     projects: '**/*Tests/*.csproj'
     arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
+
 # - task: DotNetCoreCLI@2
 #   displayName: Pack
 #   inputs:
 #     command: pack
 #     packagesToPack: '**/Redis/NRedis.csproj'
+
 # - task: DotNetCoreCLI@2
 #   displayName: Push
 #   inputs:
@@ -34,4 +38,17 @@ steps:
 #     nuGetFeedType: external
 #     packagesToPush: '$(build.artifactStagingDirectory)\**\*.nupkg'
 #     publishFeedCredentials: $(nugetConnection)
+
+# - task: DotNetCoreCLI@2
+#   displayName: Publish
+#   inputs:
+#     command: publish
+#     publishWebProjects: True
+#     arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
+#     zipAfterPublish: True
+
 # - task: PublishBuildArtifacts@1
+#   displayName: 'Publish Artifact'
+#   inputs:
+#     PathtoPublish: '$(build.artifactstagingdirectory)'
+#   condition: succeededOrFailed()
