@@ -11,8 +11,12 @@ steps:
     command: restore
     projects: '**/*.csproj'
 
-- task: gittools.gitversion-netcore-preview.gitversion-netcore-task.GitVersionNetCore@5
+- task: GitVersionNetCore@5
   displayName: GitVersion
+  # inputs:
+  #   updateAssemblyInfo: true
+  #   updateAssemblyInfoFilename: 'fff.cs'
+  #   additionalArguments: '-other'
 
 - task: DotNetCoreCLI@2
   displayName: Build
