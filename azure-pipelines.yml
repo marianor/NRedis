@@ -11,6 +11,9 @@ steps:
     command: restore
     projects: '**/*.csproj'
 
+- task: gittools.gitversion-netcore-preview.gitversion-netcore-task.GitVersionNetCore@5
+  displayName: GitVersion
+
 - task: DotNetCoreCLI@2
   displayName: Build
   inputs:
