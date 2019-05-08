@@ -29,8 +29,9 @@ steps:
     arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
 - task: DotNetCoreCLI@2
+  displayName: Pack
   inputs:
-    command: 'pack'
+    command: pack
     searchPatternPack: '**/Redis/NRedis.csproj'
     nobuild: true
     buildProperties: 'PackageVersion=$(GitVersion.NuGetVersion)'
