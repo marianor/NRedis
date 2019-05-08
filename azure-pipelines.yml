@@ -33,7 +33,7 @@ steps:
   inputs:
     command: pack
     packagesToPack: '**/Redis/NRedis.csproj'
-    arguments: '-p:Version=$(GitVersion.NuGetVersion)'
+    arguments: '--configuration $(BuildConfiguration) --include-symbols --no-build'
 
 - task: PublishBuildArtifacts@1
   inputs:
