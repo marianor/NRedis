@@ -13,10 +13,10 @@ steps:
 
 - task: GitVersionNetCore@5
   displayName: GitVersion
-  # inputs:
-  #   updateAssemblyInfo: true
+  inputs:
+     updateAssemblyInfo: true
   #   updateAssemblyInfoFilename: 'fff.cs'
-  #   additionalArguments: '-other'
+     additionalArguments: '/verbosity debug'
 
 - task: DotNetCoreCLI@2
   displayName: Build
