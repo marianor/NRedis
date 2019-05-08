@@ -33,3 +33,7 @@ steps:
   inputs:
     command: pack
     packagesToPack: '**/Redis/NRedis.csproj'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    ArtifactName: 'drop'
