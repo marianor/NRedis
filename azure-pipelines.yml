@@ -19,7 +19,7 @@ steps:
   displayName: Build
   inputs:
     projects: '**/*.csproj'
-    arguments: '--configuration $(BuildConfiguration) -p:Version=$(GitVersion.NuGetVersion)'
+    arguments: '--configuration $(BuildConfiguration) -p:Version='
 
 - task: DotNetCoreCLI@2
   displayName: Test
@@ -29,11 +29,12 @@ steps:
     arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
 
 - task: DotNetCoreCLI@2
-  displayName: Pack
   inputs:
-    command: pack
-    packagesToPack: '**/Redis/NRedis.csproj'
-    arguments: '--configuration $(BuildConfiguration) --include-symbols --no-build'
+    command: 'pack'
+    searchPatternPack: '**/Redis/NRedis.csproj'
+    nobuild: true
+    buildProperties: '-p:PackageVersion=$(GitVersion.NuGetVersion)'
+    verbosityPack: 'Normal'
 
 - task: PublishBuildArtifacts@1
   inputs:
