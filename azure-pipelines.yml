@@ -33,7 +33,7 @@ steps:
     command: 'pack'
     searchPatternPack: '**/Redis/NRedis.csproj'
     nobuild: true
-    buildProperties: '--configuration $(BuildConfiguration) -p:PackageVersion=$(GitVersion.NuGetVersion)'
+    buildProperties: 'PackageVersion=$(GitVersion.NuGetVersion)'
     verbosityPack: 'Normal'
 
 - task: PublishBuildArtifacts@1
