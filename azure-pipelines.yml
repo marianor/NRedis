@@ -19,7 +19,7 @@ steps:
   displayName: Build
   inputs:
     projects: '**/*.csproj'
-    arguments: '--configuration $(BuildConfiguration) -p:Version='
+    arguments: '--configuration $(BuildConfiguration) -p:Version=$(GitVersion.NuGetVersion)'
 
 - task: DotNetCoreCLI@2
   displayName: Test
