@@ -11,12 +11,9 @@ steps:
     command: restore
     projects: '**/*.csproj'
 
-- task: GitVersionNetCore@5
-  displayName: GitVersion
+- task: GitVersion@4
   inputs:
-     updateAssemblyInfo: true
-  #   updateAssemblyInfoFilename: 'fff.cs'
-     additionalArguments: '/verbosity debug'
+    updateAssemblyInfo: true
 
 - task: DotNetCoreCLI@2
   displayName: Build
