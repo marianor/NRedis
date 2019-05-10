@@ -9,15 +9,16 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: GitVersion@4
+  displayName: Set Version
+  inputs:
+    updateAssemblyInfo: true
+
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
     command: restore
     projects: '**/*.csproj'
-
-- task: GitVersion@4
-  inputs:
-    updateAssemblyInfo: true
 
 - task: DotNetCoreCLI@2
   displayName: Build
@@ -30,7 +31,7 @@ steps:
   inputs:
     command: test
     projects: '**/*Tests/*.csproj'
-    arguments: '--configuration $(BuildConfiguration) --collect "Code coverage"'
+    arguments: '--configuration $(BuildConfiguration) --collect "Code coverage" -p:Version=$(GitVersion.NuGetVersion)'
 
 - task: DotNetCoreCLI@2
   displayName: Pack
