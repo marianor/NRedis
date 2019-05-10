@@ -1,6 +1,6 @@
 # NRedis
 
-[![Build Status](https://dev.azure.com/shadowfly/NRedis/_apis/build/status/NRedis?branchName=master)](https://dev.azure.com/shadowfly/NRedis/_build/latest?definitionId=8)
+[![Build Status](https://dev.azure.com/shadowfly/NRedis/_apis/build/status/NRedis-CI?branchName=master)](https://dev.azure.com/shadowfly/NRedis/_build?definitionId=9)
 
 ## Introduction
 A simple Redis Client supporting .NET projects. It is written as .NET Standard 2.0.
