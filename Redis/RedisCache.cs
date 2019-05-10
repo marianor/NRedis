@@ -165,11 +165,9 @@ namespace NRedis
                 var response = await _respClient.ExecuteAsync(setRequest, token).ConfigureAwait(false);
                 ThrowIfError(response);
             }
-            else
-            {
-                var responses = await _respClient.ExecuteAsync(new[] { setRequest, expirationRequest }, token).ConfigureAwait(false);
-                ThrowIfError(responses);
-            }
+
+            var responses = await _respClient.ExecuteAsync(new[] { setRequest, expirationRequest }, token).ConfigureAwait(false);
+            ThrowIfError(responses);
         }
 
         private IRequest GetExpirationRequest(string key, DistributedCacheEntryOptions options)

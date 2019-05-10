@@ -22,7 +22,7 @@ namespace NRedis
 
         public static ArraySegment<T> AsSegment<T>(this in ReadOnlyMemory<T> memory)
         {
-            if (MemoryMarshal.TryGetArray(memory, out ArraySegment<T> segment))
+            if (MemoryMarshal.TryGetArray(memory, out var segment))
                 return segment;
 
             throw new InvalidCastException(Resources.CannotMarshalFromTypeToType.Format(typeof(ReadOnlyMemory<T>), typeof(ArraySegment<T>)));
@@ -32,7 +32,7 @@ namespace NRedis
         {
             // TODO I should consider the case there is more than 1 segment ??
             var position = buffer.Start;
-            if (buffer.TryGet(ref position, out ReadOnlyMemory<T> memory))
+            if (buffer.TryGet(ref position, out var memory))
                 return memory.Span;
 
             throw new InvalidCastException(Resources.CannotMarshalFromTypeToType.Format(typeof(ReadOnlySequence<T>), typeof(ReadOnlySpan<T>)));

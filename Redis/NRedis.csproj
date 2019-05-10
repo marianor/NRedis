@@ -16,6 +16,7 @@
     <Company>(None)</Company>
     <NeutralLanguage>en-US</NeutralLanguage>
     <LangVersion>7.3</LangVersion>
+    <Description>A simple Redis Client supporting .NET projects. It is written as .NET Standard 2.0.</Description>
   </PropertyGroup>
 
   <ItemGroup>

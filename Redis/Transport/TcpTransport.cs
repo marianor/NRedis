@@ -1,6 +1,4 @@
-﻿using NRedis.Properties;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
@@ -8,6 +6,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NRedis.Properties;
 
 namespace NRedis.Transport
 {
@@ -103,7 +103,7 @@ namespace NRedis.Transport
             while (ReadChunk(pipe.Writer)) ;
             pipe.Writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
             pipe.Reader.Complete();
             return result.Buffer;

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ namespace NRedis
             var builder = new StringBuilder();
             foreach (var memory in buffer)
                 foreach (var b in memory.Span)
-                    if (m_replace.TryGetValue(b, out string replace))
+                    if (m_replace.TryGetValue(b, out var replace))
                         builder.Append(replace);
                     else if (char.IsControl((char)b))
                         builder.AppendFormat(CultureInfo.InvariantCulture, "\\x{0:X}", b);

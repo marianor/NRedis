@@ -20,7 +20,7 @@ namespace NRedis.Protocol
             request.WriteCommandRequest(pipe.Writer);
             pipe.Writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
             pipe.Reader.Complete();
             return result.Buffer;
@@ -33,7 +33,7 @@ namespace NRedis.Protocol
             requests.WriteCommndsRequest(pipe.Writer);
             pipe.Writer.Complete();
 
-            if (!pipe.Reader.TryRead(out ReadResult result))
+            if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
             pipe.Reader.Complete();
             return result.Buffer;
@@ -132,7 +132,7 @@ namespace NRedis.Protocol
         private static Span<byte> FromInt32(in int value)
         {
             Span<byte> span = new byte[11];
-            if (!Utf8Formatter.TryFormat(value, span, out int written))
+            if (!Utf8Formatter.TryFormat(value, span, out var written))
                 throw new FormatException(Resources.InvalidFormatOnType.Format(value.GetType()));
 
             return span.Slice(0, written);
@@ -142,7 +142,7 @@ namespace NRedis.Protocol
         private static Span<byte> FromInt64(in long value)
         {
             Span<byte> span = new byte[20];
-            if (!Utf8Formatter.TryFormat(value, span, out int written))
+            if (!Utf8Formatter.TryFormat(value, span, out var written))
                 throw new FormatException(Resources.InvalidFormatOnType.Format(value.GetType()));
 
             return span.Slice(0, written);
@@ -152,7 +152,7 @@ namespace NRedis.Protocol
         private static int WriteRawInt32(this PipeWriter writer, in int value)
         {
             var span = writer.GetSpan(11);
-            if (!Utf8Formatter.TryFormat(value, span, out int written))
+            if (!Utf8Formatter.TryFormat(value, span, out var written))
                 throw new FormatException(Resources.InvalidFormatOnType.Format(value.GetType()));
 
             writer.Advance(written);

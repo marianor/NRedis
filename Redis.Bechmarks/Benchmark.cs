@@ -45,27 +45,15 @@ namespace NRedis.Bechmarks
         }
 
         [Benchmark]
-        public void Set()
-        {
-            _cache.Set($"Test{KeyIndexSync}", _value, _options);
-        }
+        public void Set() => _cache.Set($"Test{KeyIndexSync}", _value, _options);
 
         [Benchmark]
-        public byte[] Get()
-        {
-            return _cache.Get($"Test{KeyIndexSync}");
-        }
+        public byte[] Get() => _cache.Get($"Test{KeyIndexSync}");
 
         [Benchmark]
-        public async Task SetAsync()
-        {
-            await _cache.SetAsync($"Test{KeyIndexAsync}", _value, _options);
-        }
+        public async Task SetAsync() => await _cache.SetAsync($"Test{KeyIndexAsync}", _value, _options);
 
         [Benchmark]
-        public async Task<byte[]> GetAsync()
-        {
-            return await _cache.GetAsync($"Test{KeyIndexAsync}");
-        }
+        public async Task<byte[]> GetAsync() => await _cache.GetAsync($"Test{KeyIndexAsync}");
     }
 }

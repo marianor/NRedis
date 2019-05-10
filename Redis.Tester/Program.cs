@@ -20,7 +20,7 @@ namespace NRedis.Tester
         private const string ItemsKey = "Items";
         private const string MissingKey = "Missing";
 
-        public async static Task Main()
+        public static async Task Main()
         {
             var services = new ServiceCollection()
                 .AddLogging(b => b.AddConsole().AddFilter(l => true));
@@ -117,19 +117,13 @@ namespace NRedis.Tester
             return SettingsUtility.GetGlobalPackagesFolder(nugetSettings);
         }
 
-        private static TestObject GetData()
+        private static TestObject GetData() => new TestObject
         {
-            return new TestObject
-            {
-                Id = m_random.Next(),
-                Name = $"Name {m_random.Next()}",
-                Description = $"Description {m_random.Next()}"
-            };
-        }
+            Id = m_random.Next(),
+            Name = $"Name {m_random.Next()}",
+            Description = $"Description {m_random.Next()}"
+        };
 
-        private static TestObject[] GetDataArray(int length)
-        {
-            return Enumerable.Range(1, length).Select(i => GetData()).ToArray();
-        }
+        private static TestObject[] GetDataArray(int length) => Enumerable.Range(1, length).Select(i => GetData()).ToArray();
     }
 }

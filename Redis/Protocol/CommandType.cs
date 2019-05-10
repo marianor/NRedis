@@ -22,9 +22,6 @@
 
     internal static class CommandTypeExtensions
     {
-        public static string ToCommand(this CommandType commandType)
-        {
-            return commandType.ToString().ToUpperInvariant();
-        }
+        public static string ToCommand(this CommandType commandType) => commandType.ToString().ToUpperInvariant();
     }
 }
