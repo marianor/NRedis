@@ -1,39 +1,33 @@
-﻿using Newtonsoft.Json;
-using System.IO;
+﻿using System.IO;
 using System.IO.Compression;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace NRedis
 {
     public static class Serializer
     {
-        private static readonly JsonSerializer m_serializer = new JsonSerializer();
-
-        public static byte[] Serialize(object value)
+        public static async Task<byte[]> SerializeAsync(object value)
         {
             if (value == null)
                 return null;
 
             using (var stream = new MemoryStream())
             using (var zipStream = new DeflateStream(stream, CompressionMode.Compress))
-            using (var textWriter = new StreamWriter(zipStream))
-            using (var writer = new JsonTextWriter(textWriter))
             {
-                m_serializer.Serialize(writer, value);
-                writer.Close();
+                await JsonSerializer.SerializeAsync(zipStream, value).ConfigureAwait(false);
                 return stream.ToArray();
             }
         }
 
-        public static T Deserialize<T>(byte[] buffer)
+        public static async ValueTask<T> DeserializeAsync<T>(byte[] buffer)
         {
             if (buffer == null)
                 return default;
 
             using (var stream = new MemoryStream(buffer))
             using (var zipStream = new DeflateStream(stream, CompressionMode.Decompress))
-            using (var textReader = new StreamReader(zipStream))
-            using (var reader = new JsonTextReader(textReader))
-                return m_serializer.Deserialize<T>(reader);
+                return await JsonSerializer.DeserializeAsync<T>(zipStream);
         }
     }
 }

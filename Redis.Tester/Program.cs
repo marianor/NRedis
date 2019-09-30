@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using NuGet.Configuration;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace NRedis.Tester
 {
@@ -83,24 +83,24 @@ namespace NRedis.Tester
             await cache.GetAsync<TestObject>(DeletedKey, logger).ConfigureAwait(false);
         }
 
-        private static async Task<T> GetAsync<T>(this IDistributedCache cache, string key, ILogger logger)
+        private static async ValueTask<T> GetAsync<T>(this IDistributedCache cache, string key, ILogger logger)
         {
             var buffer = await cache.GetAsync(key).ConfigureAwait(false);
-            var value = Serializer.Deserialize<T>(buffer);
+            var value = await Serializer.DeserializeAsync<T>(buffer);
             if (value == null)
             {
                 logger.LogInformation($"Get for '{key}': <Missing Key>");
                 return default;
             }
 
-            var textValue = JsonConvert.SerializeObject(value);
+            var textValue = JsonSerializer.Serialize(value);
             logger.LogInformation($"Get for '{key}': {textValue?.Substring(0, Math.Min(textValue.Length, 97))}");
             return value;
         }
 
         private static async Task SetAsync(this IDistributedCache cache, string key, object value, ILogger logger)
         {
-            var serializedValue = Serializer.Serialize(value);
+            var serializedValue = await Serializer.SerializeAsync(value).ConfigureAwait(false);
             await cache.SetAsync(key, serializedValue, new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) }).ConfigureAwait(false);
             logger.LogInformation($"Item with key '{key}' set");
         }

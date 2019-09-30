@@ -23,7 +23,7 @@ namespace NRedis.Bechmarks
         public int KeyIndexAsync => --_keyIndexAsync;
 
         [GlobalSetup]
-        public void Setup()
+        public async Task SetupAsync()
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -38,7 +38,7 @@ namespace NRedis.Bechmarks
                 Password = section.GetValue<string>("Password"),
             };
 
-            _value = Serializer.Serialize(new { Name = "foo", Description = "bar" });
+            _value = await Serializer.SerializeAsync(new { Name = "foo", Description = "bar" });
             _options = new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(10) };
 
             _cache = new RedisCache(options);

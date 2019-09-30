@@ -17,7 +17,7 @@ namespace NRedis.Transport
 
         private TcpClient _client;
         private Stream _stream;
-        
+
         public TcpTransport(string host, int port)
         {
             Host = host ?? throw new ArgumentNullException(nameof(host));
@@ -50,9 +50,19 @@ namespace NRedis.Transport
             State = TransportState.Connected;
         }
 
-        protected virtual Stream GetStream(TcpClient client) => client.GetStream();
+        protected virtual Stream GetStream(TcpClient client)
+        {
+            if (client == null)
+                throw new ArgumentNullException(nameof(client));
+            return client.GetStream();
+        }
 
-        protected virtual async Task<Stream> GetStreamAsync(TcpClient client) => await Task.FromResult(client.GetStream()).ConfigureAwait(false);
+        protected virtual async Task<Stream> GetStreamAsync(TcpClient client)
+        {
+            if (client == null)
+                throw new ArgumentNullException(nameof(client));
+            return await Task.FromResult(client.GetStream()).ConfigureAwait(false);
+        }
 
         public ReadOnlySequence<byte> Send(ReadOnlySequence<byte> request)
         {
