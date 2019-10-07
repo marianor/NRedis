@@ -22,7 +22,7 @@ namespace NRedis.Protocol
 
             if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            pipe.Reader.Complete();
+
             return result.Buffer;
         }
 
@@ -35,7 +35,7 @@ namespace NRedis.Protocol
 
             if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            pipe.Reader.Complete();
+
             return result.Buffer;
         }
 
@@ -46,7 +46,6 @@ namespace NRedis.Protocol
             pipe.Writer.Complete();
 
             var result = await pipe.Reader.ReadAsync(token);
-            pipe.Reader.Complete();
             return result.Buffer;
         }
 
@@ -54,10 +53,9 @@ namespace NRedis.Protocol
         {
             var pipe = new Pipe();
             requests.WriteCommndsRequest(pipe.Writer);
-            pipe.Writer.Complete();
+            await pipe.Writer.CompleteAsync();
 
             var result = await pipe.Reader.ReadAsync(token);
-            pipe.Reader.Complete();
             return result.Buffer;
         }
 
