@@ -20,7 +20,7 @@ namespace NRedis.Protocol
         public RespClient(IOptions<RedisCacheOptions> optionsAccessor, ITransport transport = null)
         {
             _optionsAccessor = optionsAccessor?.Value ?? throw new ArgumentNullException(nameof(optionsAccessor));
-            _transport = transport ?? (_optionsAccessor.UseSsl ? new TlsTcpTransport(_optionsAccessor.Host, _optionsAccessor.Port) : new TcpTransport(_optionsAccessor.Host, _optionsAccessor.Port));
+            _transport = transport ?? (_optionsAccessor.UseTls ? new TlsTcpTransport(_optionsAccessor.Host, _optionsAccessor.Port) : new TcpTransport(_optionsAccessor.Host, _optionsAccessor.Port));
             _transport.Logger = optionsAccessor.Value.LoggerFactory?.CreateLogger(_transport.GetType());
         }
 

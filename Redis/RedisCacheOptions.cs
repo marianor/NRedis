@@ -14,7 +14,7 @@ namespace NRedis
 
         public int Port { get; set; } = 6380;
 
-        public bool UseSsl { get; set; } = true;
+        public bool UseTls { get; set; } = true;
 
         public string Password { get; set; }
 

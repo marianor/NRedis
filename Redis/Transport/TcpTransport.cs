@@ -115,7 +115,7 @@ namespace NRedis.Transport
 
             if (!pipe.Reader.TryRead(out var result))
                 throw new InvalidOperationException(Resources.CannotReadFromPipe.Format(result.IsCanceled, result.IsCompleted));
-            pipe.Reader.Complete();
+            
             return result.Buffer;
         }
 
@@ -127,7 +127,6 @@ namespace NRedis.Transport
             pipe.Writer.Complete();
 
             var result = await pipe.Reader.ReadAsync(token).ConfigureAwait(false);
-            pipe.Reader.Complete();
             return result.Buffer;
         }
 

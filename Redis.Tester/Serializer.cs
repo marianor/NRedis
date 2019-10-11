@@ -15,7 +15,8 @@ namespace NRedis
             using (var stream = new MemoryStream())
             using (var zipStream = new DeflateStream(stream, CompressionMode.Compress))
             {
-                await JsonSerializer.SerializeAsync(zipStream, value).ConfigureAwait(false);
+                await JsonSerializer.SerializeAsync(zipStream, value, value.GetType()).ConfigureAwait(false);
+                zipStream.Flush();
                 return stream.ToArray();
             }
         }
