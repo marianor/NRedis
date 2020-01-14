@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using NRedis.Tester.Properties;
 
 namespace NRedis.Tester
 {
@@ -25,7 +26,7 @@ namespace NRedis.Tester
             };
 
             if (!_redisServer.Start())
-                throw new InvalidOperationException("Cannot start server");
+                throw new InvalidOperationException(Resources.CannotStartServer);
         }
 
 
