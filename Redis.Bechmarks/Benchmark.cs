@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -7,8 +8,7 @@ using System.Threading.Tasks;
 
 namespace NRedis.Bechmarks
 {
-    [CoreJob]
-    //[ClrJob] // , MonoJob, CoreRtJob
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [MemoryDiagnoser]
     public class Benchmark
     {
